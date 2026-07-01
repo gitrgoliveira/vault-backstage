@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: vault-trust
+  name: vault-l1-trust
   title: Vault Trust Onboarding (Layer 1)
   description: Establish trust by mounting a JWT auth backend for a cluster or GitLab instance.
   tags: [vault, trust]

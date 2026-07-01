@@ -78,7 +78,7 @@ metadata:
     backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-kvv2
     hcptf.io/module-name: terraform-vault-add-kvv2
     hcptf.io/layer: usecase
-    hcptf.io/outputs: kv_mount_path,group_name,injector_yaml,vso_yaml
+    hcptf.io/outputs: kv_mount_path,group_name,consumption_examples
     hcptf.io/depends-on-layer: principal
 spec:
   type: terraform-module

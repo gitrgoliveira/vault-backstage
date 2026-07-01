@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: vault-admin-tenant-onboarding
+  name: vault-l0-admin-onboarding
   title: Vault Tenant Onboarding (Admin)
   description: ADMIN ONLY. Onboard a new tenant — creates the per-environment <tenant>-Vault-<env> projects, namespaces, trust, and variable sets.
   tags: [vault, admin, onboarding]

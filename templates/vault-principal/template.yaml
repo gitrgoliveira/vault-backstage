@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: vault-principal
+  name: vault-l2-principal
   title: Vault Principal Onboarding (Layer 2)
   description: Onboard a Kubernetes ServiceAccount or GitLab project as a Vault identity.
   tags: [vault, principal]
@@ -80,14 +80,14 @@ spec:
                   description: >-
                     The cluster trust workspace (Layer 1) that provides
                     jwt_auth_path and jwt_mount_accessor for this principal.
-                  ui:field: EntityPicker
+                  ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/layer: trust
-                    defaultKind: Resource
-            - required: [gitlabInstanceName, gitlabProjectId, gitlabProjectPath]
+                    scopeField: onboardedTarget
+            - required: [gitlabInstanceName, gitlabProjectId, gitlabProjectPath, parentGitlabTrust]
               properties:
                 principalType:
                   enum: [gitlab]
@@ -104,6 +104,20 @@ spec:
                   title: GitLab Project Path (group/project)
                   type: string
                   description: The full path of the project, e.g. platform/payments-api.
+                parentGitlabTrust:
+                  title: Parent GitLab Trust Workspace
+                  type: string
+                  description: >-
+                    The GitLab trust workspace (Layer 1) this project
+                    authenticates against. Used to link the layers in the
+                    catalog graph.
+                  ui:field: ScopedEntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/module-name: terraform-vault-gitlab-onboarding
+                    scopeField: onboardedTarget
   steps:
     - id: fetch-target
       name: Resolve tenant project
@@ -118,6 +132,13 @@ spec:
       input:
         entityRef: ${{ parameters.parentTrustWorkspace }}
 
+    - id: fetch-gitlab-trust
+      name: Fetch parent GitLab trust workspace
+      if: ${{ parameters.principalType === "gitlab" }}
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.parentGitlabTrust }}
+
     - id: k8s
       name: Provision Kubernetes principal
       if: ${{ parameters.principalType === "k8s" }}
@@ -126,6 +147,7 @@ spec:
         workspaceName: ${{ parameters.workspaceName }}
         moduleName: terraform-vault-add-k8s-namespace-access
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        parentWorkspaceName: ${{ steps['fetch-trust'].output.entity.metadata.name }}
         vars:
           cluster_name: ${{ parameters.clusterName }}
           principal_name: ${{ parameters.principalName }}
@@ -142,6 +164,7 @@ spec:
         workspaceName: ${{ parameters.workspaceName }}
         moduleName: terraform-vault-add-gitlab-project-access
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        parentWorkspaceName: ${{ steps['fetch-gitlab-trust'].output.entity.metadata.name }}
         vars:
           gitlab_instance_name: ${{ parameters.gitlabInstanceName }}
           principal_name: ${{ parameters.principalName }}

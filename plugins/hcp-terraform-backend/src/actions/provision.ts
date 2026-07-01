@@ -39,6 +39,7 @@ export function createProvisionAction(client: HcpTfClient) {
         vars: z => z.record(z.string(), z.string()).optional().describe('Terraform variable key/value map.'),
         sensitiveVars: z => z.record(z.string(), z.boolean()).optional().describe('Keys to mark as sensitive.'),
         projectId: z => z.string().optional().describe('Explicit HCP TF project ID (overrides tenant/env resolution).'),
+        parentWorkspaceName: z => z.string().optional().describe('Name of the previous-layer workspace to link this one to in the catalog graph (recorded as a parent:<name> tag).'),
         autoApply: z => z.boolean().optional().describe('Auto-apply after plan. Default: true.'),
         waitForRun: z => z.boolean().optional().describe('Wait for the HCP TF run to finish and fail the step if it errors. Default: true.'),
         timeoutMinutes: z => z.number().optional().describe('Max minutes to wait for the run to finish. Default: 20.'),
@@ -63,6 +64,7 @@ export function createProvisionAction(client: HcpTfClient) {
         vars = {},
         sensitiveVars = {},
         projectId,
+        parentWorkspaceName,
         autoApply = true,
         waitForRun = true,
         timeoutMinutes = 20,
@@ -117,6 +119,23 @@ export function createProvisionAction(client: HcpTfClient) {
       ctx.output('workspaceUrl', result.workspaceUrl);
       ctx.output('workspaceName', result.workspaceName);
       ctx.output('projectId', resolvedProjectId);
+
+      // Record the previous-layer workspace so the catalog graph shows the
+      // L1 -> L2 -> L3 chain. Non-fatal: a tagging failure must not fail provisioning.
+      if (parentWorkspaceName && parentWorkspaceName !== result.workspaceName) {
+        try {
+          await client.addWorkspaceTags(result.workspaceId, [
+            `parent:${parentWorkspaceName}`,
+          ]);
+          ctx.logger.info(
+            `Linked workspace ${result.workspaceName} -> parent ${parentWorkspaceName}`,
+          );
+        } catch (err: any) {
+          ctx.logger.warn(
+            `Could not record parent link (parent:${parentWorkspaceName}): ${err.message}`,
+          );
+        }
+      }
 
       if (!waitForRun) {
         ctx.logger.info(

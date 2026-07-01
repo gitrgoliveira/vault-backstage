@@ -10,7 +10,7 @@ import { Config } from '@backstage/config';
 import { HcpTfClient } from './HcpTfClient.ts';
 
 /** Module name to architecture layer */
-const MODULE_LAYER: Record<string, string> = {
+export const MODULE_LAYER: Record<string, string> = {
   'terraform-vault-cluster-onboarding': 'trust',
   'terraform-vault-gitlab-onboarding': 'trust',
   'terraform-vault-hcptf-onboarding': 'trust',
@@ -21,6 +21,29 @@ const MODULE_LAYER: Record<string, string> = {
   'terraform-vault-add-permission-group': 'usecase',
   'terraform-vault-pgsql-onboarding': 'usecase',
 };
+
+/**
+ * Resolves the architecture layer for a module name. HCP Terraform's
+ * source-module-id yields the SHORT registry name (e.g. "add-kvv2"), while the
+ * MODULE_LAYER keys are the full published names ("terraform-vault-add-kvv2"),
+ * so both forms are tried. Returns undefined for modules that are not part of
+ * the Vault self-service suite, so unrelated no-code workspaces are skipped.
+ */
+export function layerForModule(moduleName: string): string | undefined {
+  return MODULE_LAYER[moduleName] ?? MODULE_LAYER[`terraform-vault-${moduleName}`];
+}
+
+/**
+ * Returns the full published module name (`terraform-vault-<short>`) when the
+ * short registry name (as reported by HCP's source-module-id) maps to a known
+ * Vault module; otherwise returns the input unchanged. Keeps
+ * `hcptf.io/module-name` stable and recognizable so template `catalogFilter`s
+ * can match on the full name regardless of what HCP reports.
+ */
+export function canonicalModuleName(moduleName: string): string {
+  const full = `terraform-vault-${moduleName}`;
+  return MODULE_LAYER[full] ? full : moduleName;
+}
 
 /** Derives a Backstage system name from a workspace layer. */
 function layerToSystem(layer: string): string {
@@ -33,7 +56,7 @@ function layerToSystem(layer: string): string {
 }
 
 /** Extracts module name from source-module-id like private/org/module-name/vault/1.0.0. */
-function moduleNameFromSourceId(sourceModuleId: string | null): string | null {
+export function moduleNameFromSourceId(sourceModuleId: string | null): string | null {
   if (!sourceModuleId) return null;
   const parts = sourceModuleId.split('/');
   // format: private/<org>/<module-name>/<provider>/<version>
@@ -106,17 +129,58 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
       return;
     }
 
+    // Gate ingestion to workspaces that live in a Product:Vault-tagged project.
+    // If the org uses no such tag (empty set), fall back to module-only
+    // filtering so the catalog is not accidentally emptied.
+    let vaultProjectIds: Set<string> | undefined;
+    try {
+      const projects = await this.client.listVaultProjects();
+      if (projects.length > 0) {
+        vaultProjectIds = new Set(projects.map(p => p.id));
+        this.logger.info(
+          `HcpTerraformWorkspaceProvider: gating ingestion to ${vaultProjectIds.size} ` +
+            `Product:Vault-tagged project(s)`,
+        );
+      }
+    } catch (err: any) {
+      this.logger.warn(
+        `HcpTerraformWorkspaceProvider: could not list Vault-tagged projects; ` +
+          `ingesting by module only: ${err.message}`,
+      );
+    }
+
+    // Resolve onboarded tenant/env targets once and index them by project id so
+    // each workspace can be enriched with its tenant/environment and linked to
+    // the matching vault-target (used by the "create next layer" button).
+    const targets = await this.discoverTargets();
+    const targetByProject = new Map(targets.map(t => [t.projectId, t]));
+
     const entities = await Promise.all(
       workspaces
-        .filter(ws => ws.sourceModuleId !== null)
         .map(async ws => {
           const moduleName = moduleNameFromSourceId(ws.sourceModuleId);
-          if (!moduleName) return null;
-          const layer = MODULE_LAYER[moduleName] ?? 'unknown';
+          const layer = moduleName ? layerForModule(moduleName) : undefined;
+          // Only ingest workspaces created from a Vault self-service module.
+          // Other no-code modules (e.g. rds, vpc) have a source-module-id but no
+          // matching layer, so they are skipped to keep the catalog Vault-only.
+          if (!moduleName || !layer) return null;
+          // Also require the workspace to live in a Product:Vault-tagged project
+          // (when such projects exist), so stray Vault-module workspaces sitting
+          // in unrelated projects are excluded.
+          if (vaultProjectIds && !(ws.projectId && vaultProjectIds.has(ws.projectId))) {
+            return null;
+          }
           const system = layerToSystem(layer);
+          const target = ws.projectId ? targetByProject.get(ws.projectId) : undefined;
           const tenant =
+            target?.tenant ??
             ws.tagNames.find(t => t.startsWith(`${this.tenantTagKey}:`))?.split(':')[1] ??
             'unknown';
+          // Parent workspace (previous layer) recorded at provision time as a
+          // `parent:<name>` tag; drives the catalog-graph L1 -> L2 -> L3 chain.
+          const parentName = ws.tagNames
+            .find(t => t.startsWith('parent:'))
+            ?.slice('parent:'.length);
 
           // Fetch outputs and add as annotations (non-sensitive only).
           // Cached by state-version id; no API call for unchanged/never-applied ws.
@@ -148,18 +212,31 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
                   'backstage.io/managed-by-origin-location': `hcp-terraform:${this.organization}`,
                   'hcptf.io/workspace-id': ws.id,
                   'hcptf.io/workspace-url': this.client.workspaceUrl(ws.name),
-                  'hcptf.io/module-name': moduleName,
+                  'hcptf.io/module-name': canonicalModuleName(moduleName),
                   'hcptf.io/layer': layer,
                   'hcptf.io/run-status': ws.status,
+                  ...(target
+                    ? {
+                        'hcptf.io/tenant': target.tenant,
+                        'hcptf.io/environment': target.env,
+                        'hcptf.io/target': `${target.tenant}-${target.env}`,
+                      }
+                    : {}),
                   ...outputAnnotations,
                 },
-                tags: [layer, moduleName.replace(/^terraform-/, ''), tenant],
+                tags: [layer, moduleName.replace(/^terraform-/, ''), tenant.toLowerCase()],
               },
               spec: {
                 type: 'vault-workspace',
                 lifecycle: 'production',
-                owner: `group:default/${tenant}`,
+                owner: `group:default/${tenant.toLowerCase()}`,
                 system: `system:default/${system}`,
+                // Link to the previous-layer workspace so the catalog graph shows
+                // the L1 -> L2 -> L3 chain (dependsOn/dependencyOf relations).
+                // Guard against a self-reference producing a broken relation.
+                ...(parentName && parentName !== ws.name
+                  ? { dependsOn: [`resource:default/${parentName}`] }
+                  : {}),
               },
             },
             locationKey: `hcp-terraform:${ws.id}`,
@@ -172,7 +249,7 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
       locationKey: string;
     }[];
 
-    const targetEntities = await this.buildTargetEntities();
+    const targetEntities = this.buildTargetEntities(targets);
 
     this.logger.info(
       `HcpTerraformWorkspaceProvider: emitting ${validEntities.length} workspace + ` +
@@ -186,10 +263,11 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
   }
 
   /**
-   * Emit one Resource per onboarded tenant/environment project so templates can
-   * offer a native dropdown (EntityPicker) instead of free-text tenant fields.
+   * Discover onboarded tenant/env targets, logging and tolerating failure.
    */
-  private async buildTargetEntities(): Promise<{ entity: any; locationKey: string }[]> {
+  private async discoverTargets(): Promise<
+    Awaited<ReturnType<HcpTfClient['discoverOnboardedTargets']>>
+  > {
     let targets: Awaited<ReturnType<HcpTfClient['discoverOnboardedTargets']>>;
     try {
       targets = await this.client.discoverOnboardedTargets();
@@ -211,6 +289,16 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
           `${targets.map(t => `${t.tenant}/${t.env}`).join(', ')}`,
       );
     }
+    return targets;
+  }
+
+  /**
+   * Emit one Resource per onboarded tenant/environment project so templates can
+   * offer a native dropdown (EntityPicker) instead of free-text tenant fields.
+   */
+  private buildTargetEntities(
+    targets: Awaited<ReturnType<HcpTfClient['discoverOnboardedTargets']>>,
+  ): { entity: any; locationKey: string }[] {
     return targets.map(t => ({
       entity: {
         apiVersion: 'backstage.io/v1alpha1',

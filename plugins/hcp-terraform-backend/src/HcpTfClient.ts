@@ -649,6 +649,19 @@ export class HcpTfClient {
     return outputs;
   }
 
+  /**
+   * Add plain tag names to a workspace (e.g. `parent:foo`). Used to record the
+   * previous-layer workspace so the catalog can render the L1 -> L2 -> L3 chain.
+   */
+  async addWorkspaceTags(workspaceId: string, tags: string[]): Promise<void> {
+    if (tags.length === 0) return;
+    await this.request<any>(
+      'POST',
+      `/api/v2/workspaces/${workspaceId}/relationships/tags`,
+      { data: tags.map(name => ({ type: 'tags', attributes: { name } })) },
+    );
+  }
+
   /** Queue a destroy run on a workspace. */
   async createDestroyRun(workspaceId: string, message: string): Promise<{ runId: string; runUrl: string }> {
     const payload = {
