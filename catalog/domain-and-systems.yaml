@@ -1,0 +1,34 @@
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: vault-self-service
+  description: Self-service Vault access platform built on HCP Terraform no-code modules.
+spec:
+  owner: group:default/vault-platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: vault-trust
+  description: Trust layer modules that establish auth backends.
+spec:
+  owner: group:default/vault-platform
+  domain: vault-self-service
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: vault-principal
+  description: Principal layer modules that onboard identities.
+spec:
+  owner: group:default/vault-platform
+  domain: vault-self-service
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: vault-usecase
+  description: Use-case layer modules that grant access and policies.
+spec:
+  owner: group:default/vault-platform
+  domain: vault-self-service

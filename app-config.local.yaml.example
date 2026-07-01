@@ -1,0 +1,22 @@
+# app-config.local.yaml.example
+# Copy to app-config.local.yaml for local overrides (gitignored).
+# Values here override app-config.yaml at development time.
+
+hcpTerraform:
+  organization: my-hcp-terraform-org
+  token: ${HCP_TF_TOKEN}
+  # Uncomment and populate the nocode-xxx IDs once modules are enabled in HCP TF:
+  # moduleMap:
+  #   terraform-vault-cluster-onboarding: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-gitlab-onboarding: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-k8s-namespace-access: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-gitlab-project-access: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-kvv2: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-pgsql-role: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-permission-group: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-pgsql-onboarding: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-hcptf-onboarding: nocode-xxxxxxxxxxxxxxxx
+
+auth:
+  providers:
+    guest: {}

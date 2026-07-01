@@ -1,5 +1,5 @@
 app:
-  title: Scaffolded Backstage App
+  title: Vault Self-Service Portal
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json
@@ -10,9 +10,58 @@ app:
     - page:catalog:
         config:
           path: /
+    # Default the catalog list filter to "all" instead of "owned". With guest/dev
+    # auth the signed-in user owns nothing, so the "owned" default renders an
+    # empty catalog even though entities exist.
+    - catalog-filter:catalog/list:
+        config:
+          initialFilter: all
 
 organization:
-  name: My Company
+  name: Vault Self-Service Portal
+
+hcpTerraform:
+  organization: ${HCP_TF_ORGANIZATION}
+  baseUrl: ${HCP_TF_BASE_URL:-https://app.terraform.io}
+  token: ${HCP_TF_TOKEN}
+  projects:
+    # Placeholders {tenant} and {env} are substituted by the backend at resolve time.
+    # (Do NOT use ${...} here — Backstage would treat it as an env-var reference.)
+    namingPattern: "{tenant}-Vault-{env}"
+    tenantTagKey: ${HCP_TF_TENANT_TAG_KEY:-tenant}
+    # Admin project holding the tenant-onboarding workspaces. Onboarded tenants
+    # are discovered from those workspaces' project_ids/project_names outputs.
+    adminProjectName: ${HCP_TF_ADMIN_PROJECT_NAME:-HCP Vault Admin}
+    # Optionally pin the admin project by ID (prj-xxxx) instead of by name:
+    # adminProjectId: ${HCP_TF_ADMIN_PROJECT_ID}
+    environments:
+      - dev
+      - test
+      - prod
+    # Tag-binding that marks a project as a Vault onboarding project.
+    productTag:
+      key: Product
+      value: Vault
+  audit:
+    requestedByTagKey: ${HCP_TF_REQUESTED_BY_TAG_KEY:-requested-by}
+  # moduleMap pre-populates the module-name -> nocode-xxx ID mapping.
+  # Obtain these from your HCP TF org after enabling no-code on each module.
+  # If omitted the client will attempt API resolution at runtime (requires list permission).
+  # moduleMap:
+  #   terraform-vault-cluster-onboarding: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-gitlab-onboarding: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-k8s-namespace-access: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-gitlab-project-access: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-kvv2: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-pgsql-role: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-add-permission-group: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-pgsql-onboarding: nocode-xxxxxxxxxxxxxxxx
+  #   terraform-vault-hcptf-onboarding: nocode-xxxxxxxxxxxxxxxx
+  # actions:
+  #   # Register the hcptf:run:create destroy action. It has NO per-owner
+  #   # authorization check; only enable it alongside a template that gates
+  #   # destruction to the workspace owner. Default: false.
+  #   enableDestroy: false
 
 backend:
   # Used for enabling authentication, secret is shared by all backend plugins
@@ -73,15 +122,26 @@ proxy:
 techdocs:
   builder: 'local' # Alternatives - 'external'
   generator:
-    runIn: 'docker' # Alternatives - 'local'
+    runIn: 'local' # 'local' uses host mkdocs (run `make docs-deps`); 'docker' needs Docker
   publisher:
     type: 'local' # Alternatives - 'googleGcs' or 'awsS3'. Read documentation for using alternatives.
 
 auth:
   # see https://backstage.io/docs/auth/ to learn about auth providers
+  environment: development
   providers:
     # See https://backstage.io/docs/auth/guest/provider
     guest: {}
+    # GitLab SSO. Activates when AUTH_GITLAB_* env vars are provided.
+    # Uncomment to enable real sign-in (keep guest for local dev only).
+    # gitlab:
+    #   development:
+    #     clientId: ${AUTH_GITLAB_CLIENT_ID}
+    #     clientSecret: ${AUTH_GITLAB_CLIENT_SECRET}
+    #     audience: ${AUTH_GITLAB_BASE_URL}
+    #     signIn:
+    #       resolvers:
+    #         - resolver: usernameMatchingUserEntityName
   # see https://backstage.io/docs/ai/mcp-actions#client-id-metadata-documents
   # to learn more about client id metadata documents
   experimentalClientIdMetadataDocuments:
@@ -103,33 +163,41 @@ catalog:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location]
+    - allow: [Component, System, API, Resource, Location, Domain, Group, User]
   locations:
-    # Local example data, file locations are relative to the backend process, typically `packages/backend`
+    # Local IDP catalog definitions. File locations are relative to packages/backend.
     - type: file
-      target: ../../examples/entities.yaml
+      target: ../../catalog/domain-and-systems.yaml
 
-    # Local example template
     - type: file
-      target: ../../examples/template/template.yaml
+      target: ../../catalog/modules.yaml
+
+    # Local scaffolder templates (3 layer templates + admin onboarding)
+    - type: file
+      target: ../../templates/vault-trust/template.yaml
       rules:
         - allow: [Template]
 
-    # Local example organizational data
     - type: file
-      target: ../../examples/org.yaml
+      target: ../../templates/vault-principal/template.yaml
+      rules:
+        - allow: [Template]
+
+    - type: file
+      target: ../../templates/vault-usecase/template.yaml
+      rules:
+        - allow: [Template]
+
+    - type: file
+      target: ../../templates/vault-admin-onboarding/template.yaml
+      rules:
+        - allow: [Template]
+
+    # Local organizational data
+    - type: file
+      target: ../../catalog/org.yaml
       rules:
         - allow: [User, Group]
-
-    ## Uncomment these lines to add more example data
-    # - type: url
-    #   target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all.yaml
-
-    ## Uncomment these lines to add an example org
-    # - type: url
-    #   target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/acme-corp.yaml
-    #   rules:
-    #     - allow: [User, Group]
 
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
@@ -141,5 +209,5 @@ permission:
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:
-  name: 'My Company Backstage' # defaults to "backstage"
-  description: 'Tools for managing your software catalog, creating new services from templates, and exploring your developer portal' # optional
+  name: 'Vault Self-Service Portal' # defaults to "backstage"
+  description: 'Tools for provisioning Vault access, browsing the catalog, and managing infrastructure via Terraform no-code modules' # optional

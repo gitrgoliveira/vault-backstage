@@ -1,0 +1,59 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: vault-admin-tenant-onboarding
+  title: Vault Tenant Onboarding (Admin)
+  description: ADMIN ONLY. Onboard a new tenant — creates the per-environment <tenant>-Vault-<env> projects, namespaces, trust, and variable sets.
+  tags: [vault, admin, onboarding]
+spec:
+  owner: group:default/vault-platform
+  type: infrastructure
+  parameters:
+    - title: Tenant onboarding
+      required:
+        - workspaceName
+        - tenant
+        - adminProjectName
+      properties:
+        workspaceName:
+          title: Workspace Name
+          type: string
+          pattern: "^[A-Za-z0-9_-]+$"
+        tenant:
+          title: Tenant
+          type: string
+          pattern: "^[A-Za-z0-9][A-Za-z0-9-]{0,30}[A-Za-z0-9]$"
+        adminProjectName:
+          title: Admin Project Name
+          type: string
+          default: HCP Vault Admin
+          description: The HCP TF admin project that carries the admin Vault credentials variable set.
+        environments:
+          title: Environments
+          type: array
+          items:
+            type: string
+            enum: [dev, test, prod]
+          default: [dev, test, prod]
+  steps:
+    - id: provision
+      name: Onboard tenant
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-hcptf-onboarding
+        projectName: ${{ parameters.adminProjectName }}
+        vars:
+          tenant: ${{ parameters.tenant }}
+          environments: ${{ parameters.environments | dump }}
+        sensitiveVars: {}
+
+  output:
+    text:
+      - title: HCP Terraform run status
+        content: ${{ steps.provision.output.runStatus or 'not waited' }}
+    links:
+      - title: HCP Terraform Workspace
+        url: ${{ steps.provision.output.workspaceUrl }}
+      - title: HCP Terraform Run
+        url: ${{ steps.provision.output.runUrl }}

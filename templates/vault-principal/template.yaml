@@ -1,0 +1,159 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: vault-principal
+  title: Vault Principal Onboarding (Layer 2)
+  description: Onboard a Kubernetes ServiceAccount or GitLab project as a Vault identity.
+  tags: [vault, principal]
+spec:
+  owner: group:default/vault-platform
+  type: infrastructure
+  parameters:
+    - title: Target & principal type
+      required:
+        - onboardedTarget
+        - workspaceName
+        - principalType
+        - principalName
+      properties:
+        onboardedTarget:
+          title: Tenant / Environment
+          type: string
+          description: >-
+            Pick the already-onboarded tenant and environment to deploy into.
+            This list is populated from the Vault tenant projects that have been
+            created by the admin onboarding. If yours is missing, run the admin
+            "Vault Tenant Onboarding" template first.
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Resource
+              spec.type: vault-target
+            defaultKind: Resource
+        workspaceName:
+          title: Workspace Name
+          type: string
+          description: >-
+            Unique name for the new HCP Terraform workspace that will hold this
+            principal. Example: sdi-dev-payments-gitlab.
+          pattern: "^[A-Za-z0-9_-]+$"
+        principalName:
+          title: Principal Name
+          type: string
+          description: >-
+            A short, unique identity name for the workload you are onboarding
+            (the application or pipeline that will authenticate to Vault).
+            Downstream "use-case" templates (KV, database, permissions) reference
+            this exact name to grant it access. Example: payments-api.
+          pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
+        principalType:
+          title: Principal Type
+          type: string
+          enum: [k8s, gitlab]
+          enumNames: ["Kubernetes / OpenShift ServiceAccount", "GitLab project"]
+      dependencies:
+        principalType:
+          oneOf:
+            - required: [clusterName, ocpNamespace, serviceAccountName, parentTrustWorkspace]
+              properties:
+                principalType:
+                  enum: [k8s]
+                clusterName:
+                  title: Cluster Name
+                  type: string
+                  description: >-
+                    Name of the cluster trust this principal lives under. Must
+                    match the cluster_name used when the cluster trust was
+                    onboarded (Layer 1).
+                  pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
+                ocpNamespace:
+                  title: OCP / K8s Namespace
+                  type: string
+                  description: The Kubernetes/OpenShift namespace the ServiceAccount runs in.
+                serviceAccountName:
+                  title: ServiceAccount Name
+                  type: string
+                  description: Name of the Kubernetes ServiceAccount to bind to this Vault identity.
+                parentTrustWorkspace:
+                  title: Parent Trust Workspace
+                  type: string
+                  description: >-
+                    The cluster trust workspace (Layer 1) that provides
+                    jwt_auth_path and jwt_mount_accessor for this principal.
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/layer: trust
+                    defaultKind: Resource
+            - required: [gitlabInstanceName, gitlabProjectId, gitlabProjectPath]
+              properties:
+                principalType:
+                  enum: [gitlab]
+                gitlabInstanceName:
+                  title: GitLab Instance
+                  type: string
+                  description: Which GitLab instance hosts the project (must match the onboarded GitLab trust).
+                  enum: [cloud, dedicated_prod, dedicated_dev]
+                gitlabProjectId:
+                  title: GitLab Project ID
+                  type: string
+                  description: The numeric GitLab project ID (Settings > General > Project ID).
+                gitlabProjectPath:
+                  title: GitLab Project Path (group/project)
+                  type: string
+                  description: The full path of the project, e.g. platform/payments-api.
+  steps:
+    - id: fetch-target
+      name: Resolve tenant project
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.onboardedTarget }}
+
+    - id: fetch-trust
+      name: Fetch parent trust workspace
+      if: ${{ parameters.principalType === "k8s" }}
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.parentTrustWorkspace }}
+
+    - id: k8s
+      name: Provision Kubernetes principal
+      if: ${{ parameters.principalType === "k8s" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-add-k8s-namespace-access
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          cluster_name: ${{ parameters.clusterName }}
+          principal_name: ${{ parameters.principalName }}
+          ocp_namespace: ${{ parameters.ocpNamespace }}
+          service_account_name: ${{ parameters.serviceAccountName }}
+          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
+          jwt_mount_accessor: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_mount_accessor'] }}
+
+    - id: gitlab
+      name: Provision GitLab principal
+      if: ${{ parameters.principalType === "gitlab" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-add-gitlab-project-access
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          gitlab_instance_name: ${{ parameters.gitlabInstanceName }}
+          principal_name: ${{ parameters.principalName }}
+          gitlab_project_id: ${{ parameters.gitlabProjectId }}
+          gitlab_project_path: ${{ parameters.gitlabProjectPath }}
+
+  output:
+    text:
+      - title: HCP Terraform run status
+        content: ${{ steps.k8s.output.runStatus or steps.gitlab.output.runStatus or 'not waited' }}
+    links:
+      - title: HCP Terraform Workspace
+        url: ${{ steps.k8s.output.workspaceUrl or steps.gitlab.output.workspaceUrl }}
+      - title: HCP Terraform Run
+        url: ${{ steps.k8s.output.runUrl or steps.gitlab.output.runUrl }}

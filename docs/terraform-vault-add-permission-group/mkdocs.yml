@@ -1,0 +1,6 @@
+site_name: terraform-vault-add-permission-group
+site_description: Vault self-service Terraform module
+plugins:
+  - techdocs-core
+nav:
+  - Overview: index.md

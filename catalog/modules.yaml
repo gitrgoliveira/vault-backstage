@@ -1,0 +1,253 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-cluster-onboarding
+  description: Creates a Vault JWT auth backend for Kubernetes/OpenShift cluster trust.
+  tags: [terraform, vault, onboarding, trust]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-cluster-onboarding
+    hcptf.io/module-name: terraform-vault-cluster-onboarding
+    hcptf.io/layer: trust
+    hcptf.io/outputs: jwt_auth_path,jwt_mount_accessor
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-trust
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-gitlab-onboarding
+  description: Creates a Vault JWT auth backend for GitLab instance trust.
+  tags: [terraform, vault, onboarding, trust, gitlab]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-gitlab-onboarding
+    hcptf.io/module-name: terraform-vault-gitlab-onboarding
+    hcptf.io/layer: trust
+    hcptf.io/outputs: jwt_auth_path,jwt_mount_accessor
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-trust
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-k8s-namespace-access
+  description: Onboards a Kubernetes namespace/service account as a Vault principal.
+  tags: [terraform, vault, principal, kubernetes]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-k8s-namespace-access
+    hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
+    hcptf.io/layer: principal
+    hcptf.io/outputs: entity_id,auth_role_name
+    hcptf.io/depends-on-layer: trust
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-principal
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-gitlab-project-access
+  description: Onboards a GitLab project as a Vault principal.
+  tags: [terraform, vault, principal, gitlab]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-gitlab-project-access
+    hcptf.io/module-name: terraform-vault-add-gitlab-project-access
+    hcptf.io/layer: principal
+    hcptf.io/outputs: entity_id,auth_role_name
+    hcptf.io/depends-on-layer: trust
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-principal
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-kvv2
+  description: Provisions KVv2 access and identity group bindings for a principal.
+  tags: [terraform, vault, kv, usecase]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-kvv2
+    hcptf.io/module-name: terraform-vault-add-kvv2
+    hcptf.io/layer: usecase
+    hcptf.io/outputs: kv_mount_path,group_name,injector_yaml,vso_yaml
+    hcptf.io/depends-on-layer: principal
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-pgsql-role
+  description: Provisions PostgreSQL static role access through Vault DB engine.
+  tags: [terraform, vault, postgresql, usecase]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-pgsql-role
+    hcptf.io/module-name: terraform-vault-add-pgsql-role
+    hcptf.io/layer: usecase
+    hcptf.io/outputs: db_role_name,policy_name,injector_yaml,vso_yaml
+    hcptf.io/depends-on-layer: principal
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-permission-group
+  description: Grants custom ACL capabilities over Vault paths to principals.
+  tags: [terraform, vault, acl, usecase]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-permission-group
+    hcptf.io/module-name: terraform-vault-add-permission-group
+    hcptf.io/layer: usecase
+    hcptf.io/outputs: policy_name,group_name
+    hcptf.io/depends-on-layer: principal
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-pgsql-onboarding
+  description: Onboards PostgreSQL secrets engine and connection for downstream roles.
+  tags: [terraform, vault, postgresql, onboarding]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-pgsql-onboarding
+    hcptf.io/module-name: terraform-vault-pgsql-onboarding
+    hcptf.io/layer: usecase
+    hcptf.io/outputs: db_mount_path,db_connection_name
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-hcptf-onboarding
+  description: Bootstraps tenant onboarding into HCP Terraform and Vault namespaces.
+  tags: [terraform, vault, hcp-terraform, onboarding]
+  annotations:
+    backstage.io/techdocs-ref: dir:../docs/terraform-vault-hcptf-onboarding
+    hcptf.io/module-name: terraform-vault-hcptf-onboarding
+    hcptf.io/layer: trust
+    hcptf.io/outputs: vault_namespaces,variable_set_ids
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-trust
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-gitlab-onboarding
+  description: Creates a Vault JWT auth backend for GitLab instance trust.
+  tags: [terraform, vault, onboarding, trust, gitlab]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-trust
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-k8s-namespace-access
+  description: Onboards a Kubernetes namespace/service account as a Vault principal.
+  tags: [terraform, vault, principal, kubernetes]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-principal
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-gitlab-project-access
+  description: Onboards a GitLab project as a Vault principal.
+  tags: [terraform, vault, principal, gitlab]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-principal
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-kvv2
+  description: Provisions KVv2 access and identity group bindings for a principal.
+  tags: [terraform, vault, kv, usecase]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-pgsql-role
+  description: Provisions PostgreSQL static role access through Vault DB engine.
+  tags: [terraform, vault, postgresql, usecase]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-add-permission-group
+  description: Grants custom ACL capabilities over Vault paths to principals.
+  tags: [terraform, vault, acl, usecase]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-pgsql-onboarding
+  description: Onboards PostgreSQL secrets engine and connection for downstream roles.
+  tags: [terraform, vault, postgresql, onboarding]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-usecase
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-vault-hcptf-onboarding
+  description: Bootstraps tenant onboarding into HCP Terraform and Vault namespaces.
+  tags: [terraform, vault, hcp-terraform, onboarding]
+spec:
+  type: terraform-module
+  lifecycle: production
+  owner: group:default/vault-platform
+  system: vault-trust

@@ -1,0 +1,122 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: vault-trust
+  title: Vault Trust Onboarding (Layer 1)
+  description: Establish trust by mounting a JWT auth backend for a cluster or GitLab instance.
+  tags: [vault, trust]
+spec:
+  owner: group:default/vault-platform
+  type: infrastructure
+  parameters:
+    - title: Target & trust type
+      required:
+        - onboardedTarget
+        - workspaceName
+        - trustType
+      properties:
+        onboardedTarget:
+          title: Tenant / Environment
+          type: string
+          description: >-
+            Pick the already-onboarded tenant and environment to deploy into.
+            The list comes from the Vault tenant projects created by the admin
+            onboarding. If yours is missing, run the admin "Vault Tenant
+            Onboarding" template first.
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Resource
+              spec.type: vault-target
+            defaultKind: Resource
+        workspaceName:
+          title: Workspace Name
+          type: string
+          description: >-
+            Unique name for the new HCP Terraform workspace. Example:
+            sdi-dev-cluster-trust.
+          pattern: "^[A-Za-z0-9_-]+$"
+        trustType:
+          title: Trust Type
+          type: string
+          enum: [cluster, gitlab]
+          enumNames: ["Kubernetes / OpenShift cluster", "GitLab instance"]
+      dependencies:
+        trustType:
+          oneOf:
+            - required: [clusterName, jwtIssuer]
+              properties:
+                trustType:
+                  enum: [cluster]
+                clusterName:
+                  title: Cluster Name
+                  type: string
+                  description: >-
+                    A short, unique name for the cluster you are establishing
+                    trust for. Principal and use-case templates reference this
+                    exact name. Example: ocp-prod-eu.
+                  pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
+                jwtIssuer:
+                  title: JWT Issuer URL
+                  type: string
+                  description: The cluster's OIDC issuer URL (kube-apiserver --service-account-issuer).
+                oidcDiscoveryUrl:
+                  title: OIDC Discovery URL (optional)
+                  type: string
+                  description: Override the OIDC discovery endpoint if it differs from the issuer.
+            - required: [gitlabInstanceName, oidcDiscoveryUrl]
+              properties:
+                trustType:
+                  enum: [gitlab]
+                gitlabInstanceName:
+                  title: GitLab Instance
+                  type: string
+                  description: Which GitLab instance to establish trust with.
+                  enum: [cloud, dedicated_prod, dedicated_dev]
+                oidcDiscoveryUrl:
+                  title: OIDC Discovery URL
+                  type: string
+                  description: >-
+                    The GitLab OIDC discovery URL, e.g.
+                    https://gitlab.com for GitLab SaaS.
+  steps:
+    - id: fetch-target
+      name: Resolve tenant project
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.onboardedTarget }}
+
+    - id: cluster
+      name: Provision cluster trust
+      if: ${{ parameters.trustType === "cluster" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-cluster-onboarding
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          cluster_name: ${{ parameters.clusterName }}
+          jwt_issuer: ${{ parameters.jwtIssuer }}
+          oidc_discovery_url: ${{ parameters.oidcDiscoveryUrl }}
+
+    - id: gitlab
+      name: Provision GitLab trust
+      if: ${{ parameters.trustType === "gitlab" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-gitlab-onboarding
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          gitlab_instance_name: ${{ parameters.gitlabInstanceName }}
+          oidc_discovery_url: ${{ parameters.oidcDiscoveryUrl }}
+
+  output:
+    text:
+      - title: HCP Terraform run status
+        content: ${{ steps.cluster.output.runStatus or steps.gitlab.output.runStatus or 'not waited' }}
+    links:
+      - title: HCP Terraform Workspace
+        url: ${{ steps.cluster.output.workspaceUrl or steps.gitlab.output.workspaceUrl }}
+      - title: HCP Terraform Run
+        url: ${{ steps.cluster.output.runUrl or steps.gitlab.output.runUrl }}

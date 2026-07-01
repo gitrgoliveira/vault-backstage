@@ -7,6 +7,8 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
+import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@internal/plugin-hcp-terraform-backend';
+import { vaultIdpPermissionModule } from './permissions.ts';
 
 const backend = createBackend();
 
@@ -27,6 +29,8 @@ backend.add(import('@backstage/plugin-techdocs-backend'));
 backend.add(import('@backstage/plugin-auth-backend'));
 // See https://backstage.io/docs/backend-system/building-backends/migrating#the-auth-plugin
 backend.add(import('@backstage/plugin-auth-backend-module-guest-provider'));
+// GitLab SSO provider (active only when auth.providers.gitlab is configured)
+backend.add(import('@backstage/plugin-auth-backend-module-gitlab-provider'));
 // See https://backstage.io/docs/auth/guest/provider
 
 // catalog plugin
@@ -40,10 +44,9 @@ backend.add(import('@backstage/plugin-catalog-backend-module-logs'));
 
 // permission plugin
 backend.add(import('@backstage/plugin-permission-backend'));
-// See https://backstage.io/docs/permissions/getting-started for how to create your own permission policy
-backend.add(
-  import('@backstage/plugin-permission-backend-module-allow-all-policy'),
-);
+// Owner-gated policy for the Vault Self-Service Portal (replaces allow-all).
+// Destroying a provisioned vault-workspace Resource is restricted to its owner group.
+backend.add(vaultIdpPermissionModule);
 
 // search plugin
 backend.add(import('@backstage/plugin-search-backend'));
@@ -65,5 +68,9 @@ backend.add(import('@backstage/plugin-signals-backend'));
 
 // mcp actions plugin
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
+
+// HCP Terraform integration — scaffolder actions + workspace catalog provider
+backend.add(hcpTerraformScaffolderModule);
+backend.add(hcpTerraformCatalogModule);
 
 backend.start();

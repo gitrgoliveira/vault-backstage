@@ -1,0 +1,261 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: vault-usecase
+  title: Vault Use-case Onboarding (Layer 3)
+  description: Grant a principal a secret use-case (KVv2, PostgreSQL role, or custom ACL), or configure a PostgreSQL connection.
+  tags: [vault, usecase]
+spec:
+  owner: group:default/vault-platform
+  type: infrastructure
+  parameters:
+    - title: Target & use-case type
+      required:
+        - onboardedTarget
+        - workspaceName
+        - useCaseType
+      properties:
+        onboardedTarget:
+          title: Tenant / Environment
+          type: string
+          description: >-
+            Pick the already-onboarded tenant and environment to deploy into.
+            The list comes from the tenant projects created by the admin
+            onboarding. If yours is missing, run the admin "Vault Tenant
+            Onboarding" template first.
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Resource
+              spec.type: vault-target
+            defaultKind: Resource
+        workspaceName:
+          title: Workspace Name
+          type: string
+          description: Unique name for the new HCP Terraform workspace, e.g. sdi-dev-payments-kv.
+          pattern: "^[A-Za-z0-9_-]+$"
+        useCaseType:
+          title: Use-case Type
+          type: string
+          enum: [kvv2, pgsql-role, permission-group, pgsql-connection]
+          enumNames:
+            - "KV v2 access"
+            - "PostgreSQL static role access"
+            - "Custom ACL permission group"
+            - "PostgreSQL connection (DBA root config)"
+      dependencies:
+        useCaseType:
+          oneOf:
+            - required: [usecaseName, clusterName, principalName, parentTrustWorkspace, parentPrincipalWorkspace]
+              properties:
+                useCaseType:
+                  enum: [kvv2]
+                usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                principalName: { title: Principal Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                k8sNamespace: { title: Kubernetes Namespace (optional), type: string }
+                parentTrustWorkspace:
+                  title: Parent Trust Workspace
+                  type: string
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/layer: trust
+                    defaultKind: Resource
+                parentPrincipalWorkspace:
+                  title: Parent Principal Workspace
+                  type: string
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/layer: principal
+                    defaultKind: Resource
+            - required: [usecaseName, clusterName, principalName, dbUsername, parentTrustWorkspace, parentPrincipalWorkspace, parentPgsqlWorkspace]
+              properties:
+                useCaseType:
+                  enum: [pgsql-role]
+                usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                principalName: { title: Principal Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                dbUsername: { title: Database Username, type: string }
+                parentTrustWorkspace:
+                  title: Parent Trust Workspace
+                  type: string
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/layer: trust
+                    defaultKind: Resource
+                parentPrincipalWorkspace:
+                  title: Parent Principal Workspace
+                  type: string
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/layer: principal
+                    defaultKind: Resource
+                parentPgsqlWorkspace:
+                  title: Parent PostgreSQL Connection Workspace
+                  type: string
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/module-name: terraform-vault-pgsql-onboarding
+                    defaultKind: Resource
+            - required: [usecaseName, clusterName, principalName, secretPath, parentPrincipalWorkspace]
+              properties:
+                useCaseType:
+                  enum: [permission-group]
+                usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                principalName: { title: Principal Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                secretPath: { title: Vault Secret Path, type: string }
+                parentPrincipalWorkspace:
+                  title: Parent Principal Workspace
+                  type: string
+                  ui:field: EntityPicker
+                  ui:options:
+                    catalogFilter:
+                      kind: Resource
+                      spec.type: vault-workspace
+                      metadata.annotations.hcptf.io/layer: principal
+                    defaultKind: Resource
+                capabilityRead: { type: boolean, default: true, title: read }
+                capabilityCreate: { type: boolean, default: false, title: create }
+                capabilityUpdate: { type: boolean, default: false, title: update }
+                capabilityDelete: { type: boolean, default: false, title: delete }
+                capabilityList: { type: boolean, default: true, title: list }
+                capabilityPatch: { type: boolean, default: false, title: patch }
+                capabilitySudo: { type: boolean, default: false, title: sudo }
+            - required: [clusterName, dbName, pgConnectionUrl, pgUsername, pgPassword]
+              properties:
+                useCaseType:
+                  enum: [pgsql-connection]
+                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                dbName: { title: Database Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                pgConnectionUrl: { title: PostgreSQL Connection URL, type: string }
+                pgUsername: { title: Root Username, type: string }
+                pgPassword: { title: Root Password, type: string, ui:widget: password }
+  steps:
+    - id: fetch-target
+      name: Resolve tenant project
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.onboardedTarget }}
+
+    - id: fetch-trust
+      name: Fetch parent trust workspace
+      if: ${{ parameters.useCaseType === "kvv2" || parameters.useCaseType === "pgsql-role" }}
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.parentTrustWorkspace }}
+
+    - id: fetch-principal
+      name: Fetch parent principal workspace
+      if: ${{ parameters.useCaseType === "kvv2" || parameters.useCaseType === "pgsql-role" || parameters.useCaseType === "permission-group" }}
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.parentPrincipalWorkspace }}
+
+    - id: fetch-pgsql
+      name: Fetch parent PostgreSQL connection workspace
+      if: ${{ parameters.useCaseType === "pgsql-role" }}
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.parentPgsqlWorkspace }}
+
+    - id: kvv2
+      name: Provision KVv2 access
+      if: ${{ parameters.useCaseType === "kvv2" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-add-kvv2
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          usecase_name: ${{ parameters.usecaseName }}
+          cluster_name: ${{ parameters.clusterName }}
+          principal_name: ${{ parameters.principalName }}
+          k8s_namespace: ${{ parameters.k8sNamespace }}
+          entity_id: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
+          auth_role_name: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
+          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
+
+    - id: pgsql-role
+      name: Provision PostgreSQL role access
+      if: ${{ parameters.useCaseType === "pgsql-role" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-add-pgsql-role
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          usecase_name: ${{ parameters.usecaseName }}
+          cluster_name: ${{ parameters.clusterName }}
+          principal_name: ${{ parameters.principalName }}
+          db_username: ${{ parameters.dbUsername }}
+          entity_id: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
+          auth_role_name: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
+          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
+          db_mount_path: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_mount_path'] }}
+          db_connection_name: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_connection_name'] }}
+
+    - id: permission-group
+      name: Provision permission group
+      if: ${{ parameters.useCaseType === "permission-group" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-add-permission-group
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          usecase_name: ${{ parameters.usecaseName }}
+          cluster_name: ${{ parameters.clusterName }}
+          principal_name: ${{ parameters.principalName }}
+          secret_path: ${{ parameters.secretPath }}
+          entity_id: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
+          capability_read: ${{ parameters.capabilityRead }}
+          capability_create: ${{ parameters.capabilityCreate }}
+          capability_update: ${{ parameters.capabilityUpdate }}
+          capability_delete: ${{ parameters.capabilityDelete }}
+          capability_list: ${{ parameters.capabilityList }}
+          capability_patch: ${{ parameters.capabilityPatch }}
+          capability_sudo: ${{ parameters.capabilitySudo }}
+
+    - id: pgsql-connection
+      name: Provision PostgreSQL connection
+      if: ${{ parameters.useCaseType === "pgsql-connection" }}
+      action: hcptf:nocode:provision
+      input:
+        workspaceName: ${{ parameters.workspaceName }}
+        moduleName: terraform-vault-pgsql-onboarding
+        projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
+        vars:
+          cluster_name: ${{ parameters.clusterName }}
+          db_name: ${{ parameters.dbName }}
+          pg_connection_url: ${{ parameters.pgConnectionUrl }}
+          pg_username: ${{ parameters.pgUsername }}
+          pg_password: ${{ parameters.pgPassword }}
+        sensitiveVars:
+          pg_connection_url: true
+          pg_password: true
+
+  output:
+    text:
+      - title: HCP Terraform run status
+        content: ${{ steps.kvv2.output.runStatus or steps['pgsql-role'].output.runStatus or steps['permission-group'].output.runStatus or steps['pgsql-connection'].output.runStatus or 'not waited' }}
+    links:
+      - title: HCP Terraform Workspace
+        url: ${{ steps.kvv2.output.workspaceUrl or steps['pgsql-role'].output.workspaceUrl or steps['permission-group'].output.workspaceUrl or steps['pgsql-connection'].output.workspaceUrl }}
+      - title: HCP Terraform Run
+        url: ${{ steps.kvv2.output.runUrl or steps['pgsql-role'].output.runUrl or steps['permission-group'].output.runUrl or steps['pgsql-connection'].output.runUrl }}
