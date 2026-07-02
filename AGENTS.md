@@ -26,6 +26,7 @@ Conventions baked into the Makefile (don't re-introduce the bugs they fix):
 ## Non-negotiable conventions (verified; violating these silently breaks things)
 
 - **Plugin-internal imports use explicit `.ts` extensions** (e.g. `from './module.ts'`). Required by TS `module: ES2020` + Backstage's CJS loader; `.js`/extensionless fail.
+- **New imports must be declared in the importing package's `package.json`.** Backstage's `@backstage/no-undeclared-imports` lint fails the build for any `@backstage/*`, MUI, or npm import not listed as a dependency (e.g. adding a new card/field pulling `@backstage/plugin-scaffolder-react`, `@material-ui/lab`, or `react-use`). Add it with `yarn --cwd packages/app add <pkg>` (pin to the versions already resolved in the lockfile) and re-run `yarn install`.
 - **Output annotation keys use a single dot:** `hcptf.io/output.<key>` — Backstage forbids a second `/` in the name segment. `hcptf.io/output/<key>` fails the catalog policy check and drops the entity.
 - **Backstage tags must be lowercase** `[a-z0-9+#]` separated by `-`; lowercase tenant/env before using them as tags.
 - **`createTemplateAction` is Zod v4:** field-function schemas and the two-arg `z.record(z.string(), z.string())` form.
