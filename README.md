@@ -57,3 +57,41 @@ Configuration:
 
 - Copy `.env.example` to `.env` and set `HCP_TF_TOKEN`.
 - Configure `hcpTerraform` settings in `app-config.yaml` and optional overrides via environment variables.
+
+## Reuse in your own Backstage instance
+
+This repository is a complete Backstage app, so the simplest path — if you do not already run Backstage — is to clone or fork it and follow the getting-started steps above. If you already operate a Backstage instance, integrate the reusable parts below.
+
+> **Prerequisites / caveats (verify before you start):**
+> - Your app must use the **new Backstage frontend system** (`@backstage/frontend-defaults`, `createApp({ features: [...] })`) — the frontend modules below register that way and will not load in a legacy `createApp`/`App.tsx` route setup.
+> - The HCP Terraform plugin is a **private workspace package** (`@internal/plugin-hcp-terraform-backend`, `"private": true`) — it is **not published to npm**, so you copy it in rather than `yarn add` it.
+> - The [nine no-code modules](#required-terraform-module-repositories) must already be published to *your* HCP Terraform organization's private registry.
+
+**1. Backend plugin.** Copy [`plugins/hcp-terraform-backend/`](plugins/hcp-terraform-backend) into your `plugins/` directory and add the workspace dependency to `packages/backend/package.json`:
+
+```json
+"@internal/plugin-hcp-terraform-backend": "workspace:plugins/hcp-terraform-backend"
+```
+
+Then wire the modules in [`packages/backend/src/index.ts`](packages/backend/src/index.ts):
+
+```ts
+import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@internal/plugin-hcp-terraform-backend';
+
+backend.add(hcpTerraformScaffolderModule); // scaffolder actions (provision/destroy no-code workspaces)
+backend.add(hcpTerraformCatalogModule);    // vault-workspace catalog entity provider
+```
+
+Optional: copy `packages/backend/src/permissions.ts` and `backend.add(vaultIdpPermissionModule)` for the owner-gated destroy policy.
+
+**2. Frontend modules.** Copy [`packages/app/src/modules/`](packages/app/src/modules) (`scaffolder`, `catalog`, `nav`) and add them to the `features` array in [`packages/app/src/App.tsx`](packages/app/src/App.tsx):
+
+```ts
+features: [/* ...existing... */, navModule, catalogModule, scaffolderModule],
+```
+
+**3. Catalog entities and templates.** Copy the [`catalog/`](catalog) and [`templates/`](templates) directories and register them under `catalog.locations` in your `app-config.yaml` (see this repo's file for the four templates plus the module/system/org entities).
+
+**4. Configuration.** Add the `hcpTerraform:` block to your `app-config.yaml`, set `HCP_TF_TOKEN` and `HCP_TF_ORGANIZATION` in `.env`, and populate `hcpTerraform.moduleMap` with your `nocode-xxxx` registry IDs (or rely on runtime resolution). Validate with `make verify-hcptf` (read-only).
+
+**5. TechDocs (optional).** Copy [`docs/`](docs) for the per-module documentation, or regenerate it from the module READMEs with `make generate` (requires `terraform-docs` on `PATH`).
