@@ -2,6 +2,10 @@
 
 This is your newly scaffolded Backstage App for the internal Vault IDP.
 
+The **Create** page surfaces the self-service Vault onboarding templates — trust (Layer 1), principal (Layer 2), and use-case (Layer 3), plus admin tenant onboarding:
+
+![Backstage Create page listing the Vault onboarding templates](screenshots/create-page.png)
+
 Use the Makefile as the single entry point.
 
 Toolchain policy (verified):
