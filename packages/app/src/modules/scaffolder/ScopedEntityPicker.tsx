@@ -11,7 +11,7 @@ import { ScaffolderField } from '@backstage/plugin-scaffolder-react/alpha';
 import type { FieldExtensionComponentProps } from '@backstage/plugin-scaffolder-react';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete from '@material-ui/lab/Autocomplete';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import useAsync from 'react-use/esm/useAsync';
 
 /**
@@ -88,6 +88,18 @@ export function ScopedEntityPicker(
   const catalogApi = useApi(catalogApiRef);
   const filter = buildCatalogFilter(options);
 
+  // Seed the field with an empty string when it is undefined so its key is
+  // present in the form data. The scaffolder only runs custom field validation
+  // for keys that exist in form data, and RJSF strips untouched string fields
+  // (especially inside `dependencies.oneOf`) to `undefined`. Without this, a
+  // never-touched required picker would skip validation and reach the backend
+  // empty, failing `catalog:fetch` with an opaque "Missing entity reference".
+  useEffect(() => {
+    if (formData === undefined) {
+      onChange('');
+    }
+  }, [formData, onChange]);
+
   const scopeField = options.scopeField;
   const scopeAnnotation = options.scopeAnnotation ?? 'hcptf.io/target';
   const scopeRef = scopeField
@@ -163,7 +175,7 @@ export function ScopedEntityPicker(
         options={entityRefs}
         getOptionLabel={option => labelFor(option)}
         loading={loading}
-        onChange={(_event, value) => onChange(value ?? undefined)}
+        onChange={(_event, value) => onChange(value ?? '')}
         renderInput={params => (
           <TextField
             {...params}
