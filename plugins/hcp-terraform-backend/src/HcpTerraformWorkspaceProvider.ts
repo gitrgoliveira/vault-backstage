@@ -199,6 +199,20 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
             // Outputs may not be available if workspace never applied
           }
 
+          // Catalog relations that drive the relations graph:
+          //  - the previous-layer workspace (L1 -> L2 -> L3 chain, from the
+          //    `parent:<name>` tag recorded at provision time);
+          //  - the onboarded tenant/env target this workspace belongs to, so
+          //    the target's graph lists every workspace provisioned into it.
+          // Both use dependsOn (the target gets the reciprocal dependencyOf).
+          const dependsOn: string[] = [];
+          if (parentName && parentName !== ws.name) {
+            dependsOn.push(`resource:default/${parentName}`);
+          }
+          if (target) {
+            dependsOn.push(`resource:default/${target.tenant}-${target.env}`);
+          }
+
           return {
             entity: {
               apiVersion: 'backstage.io/v1alpha1',
@@ -231,12 +245,10 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
                 lifecycle: 'production',
                 owner: `group:default/${tenant.toLowerCase()}`,
                 system: `system:default/${system}`,
-                // Link to the previous-layer workspace so the catalog graph shows
-                // the L1 -> L2 -> L3 chain (dependsOn/dependencyOf relations).
-                // Guard against a self-reference producing a broken relation.
-                ...(parentName && parentName !== ws.name
-                  ? { dependsOn: [`resource:default/${parentName}`] }
-                  : {}),
+                // Link to the previous-layer workspace and the tenant/env target
+                // so the catalog graph shows the L1 -> L2 -> L3 chain and each
+                // target lists its workspaces (dependsOn/dependencyOf relations).
+                ...(dependsOn.length > 0 ? { dependsOn } : {}),
               },
             },
             locationKey: `hcp-terraform:${ws.id}`,
