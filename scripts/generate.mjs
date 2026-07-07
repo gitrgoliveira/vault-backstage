@@ -4,10 +4,10 @@
  *
  * For each Terraform module it:
  *   1. Runs `terraform-docs` to extract inputs/outputs (machine-readable).
- *   2. Writes an inline TechDocs site under idp/docs/<module>/ (mkdocs.yml +
+ *   2. Writes an inline TechDocs site under docs/<module>/ (mkdocs.yml +
  *      docs/index.md) sourced from the module README + a generated
  *      inputs/outputs reference, so the Docs tab renders without drift.
- *   3. Writes a variable inventory to idp/generated/variables/<module>.json.
+ *   3. Writes a variable inventory to generated/variables/<module>.json.
  *
  * Requires: terraform-docs on PATH. Run via `make generate`.
  */

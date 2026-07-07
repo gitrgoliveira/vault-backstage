@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-defaults:
-  run:
-    working-directory: idp
-
 jobs:
   ci:
     name: Lint, Typecheck, Test
@@ -21,7 +17,7 @@ jobs:
         with:
           node-version: 24
           cache: yarn
-          cache-dependency-path: idp/yarn.lock
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
         run: yarn install --immutable

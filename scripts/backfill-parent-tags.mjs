@@ -23,8 +23,8 @@ function fail(msg) {
   console.error(`\n\u2716 ${msg}`);
   process.exit(1);
 }
-if (!org || org.startsWith('replace-')) fail('HCP_TF_ORGANIZATION is not set (edit idp/.env).');
-if (!token || token.startsWith('replace-')) fail('HCP_TF_TOKEN is not set (edit idp/.env).');
+if (!org || org.startsWith('replace-')) fail('HCP_TF_ORGANIZATION is not set (edit .env).');
+if (!token || token.startsWith('replace-')) fail('HCP_TF_TOKEN is not set (edit .env).');
 
 const headers = {
   'Content-Type': 'application/vnd.api+json',
