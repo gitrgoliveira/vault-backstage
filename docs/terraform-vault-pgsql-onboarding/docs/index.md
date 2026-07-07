@@ -22,8 +22,6 @@ Use-case root configuration.
 | `pg_password` | `string` | Root password, sensitive |
 | `allowed_roles` | `string` | Optional allowed role glob |
 | `rotate_root` | `bool` | Add root rotation statement, default `false` |
-| `vault_namespace` | `string` | Render-only |
-| `vault_address` | `string` | Render-only |
 
 ## Outputs
 
@@ -32,8 +30,6 @@ Use-case root configuration.
 | `db_mount_path` | Database mount path |
 | `db_connection_name` | Connection name |
 | `cluster_name` | Echo |
-| `vault_namespace` | Echo |
-| `vault_address` | Echo |
 
 ## No-code notes
 
@@ -42,7 +38,7 @@ Use-case root configuration.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.0.2`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `pg_username` and `pg_password` are sensitive.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `pg_username` and `pg_password` are sensitive.
 
 Form fields:
 
@@ -60,7 +56,7 @@ Form fields:
 ```hcl
 module "onboard_pgsql_connection" {
   source  = "app.terraform.io/<org>/onboard-pgsql-connection/vault"
-  version = "~> 0.0.2"
+  version = "~> 0.1.0"
 
   cluster_name      = "ocp-prod-eu"
   db_name           = "payments-db"
@@ -113,8 +109,6 @@ No modules.
 | <a name="input_pg_password"></a> [pg\_password](#input\_pg\_password) | PostgreSQL root password used by the database secrets engine connection. | `string` | n/a | yes |
 | <a name="input_pg_username"></a> [pg\_username](#input\_pg\_username) | PostgreSQL root username used by the database secrets engine connection. | `string` | n/a | yes |
 | <a name="input_rotate_root"></a> [rotate\_root](#input\_rotate\_root) | Whether to set root rotation statements on the connection. | `bool` | `false` | no |
-| <a name="input_vault_address"></a> [vault\_address](#input\_vault\_address) | Render-only Vault address value supplied via TF\_VAR\_vault\_address. | `string` | `""` | no |
-| <a name="input_vault_namespace"></a> [vault\_namespace](#input\_vault\_namespace) | Render-only Vault namespace value supplied via TF\_VAR\_vault\_namespace. | `string` | `""` | no |
 
 ## Outputs
 
@@ -123,5 +117,3 @@ No modules.
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Echo of cluster\_name input. |
 | <a name="output_db_connection_name"></a> [db\_connection\_name](#output\_db\_connection\_name) | Database backend connection name used by downstream role module. |
 | <a name="output_db_mount_path"></a> [db\_mount\_path](#output\_db\_mount\_path) | Database backend mount path used by downstream role module. |
-| <a name="output_vault_address"></a> [vault\_address](#output\_vault\_address) | Echo of render-only vault\_address. |
-| <a name="output_vault_namespace"></a> [vault\_namespace](#output\_vault\_namespace) | Echo of render-only vault\_namespace. |
