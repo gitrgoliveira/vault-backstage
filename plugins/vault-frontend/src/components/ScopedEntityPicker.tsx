@@ -67,6 +67,7 @@ export function ScopedEntityPicker(
 
   const options = uiSchema['ui:options'] ?? {};
   const catalogApi = useApi(catalogApiRef);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- options is derived from uiSchema; uiSchema is the stable RJSF reference
   const filter = useMemo(() => buildCatalogFilter(options), [uiSchema]);
 
   useEffect(() => {
