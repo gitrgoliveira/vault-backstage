@@ -8,11 +8,11 @@ import {
 import {
   catalogProcessingExtensionPoint,
 } from '@backstage/plugin-catalog-node';
-import { HcpTfClient } from './HcpTfClient.ts';
-import { HcpTerraformWorkspaceProvider } from './HcpTerraformWorkspaceProvider.ts';
-import { createProvisionAction } from './actions/provision.ts';
-import { createOutputsReadAction } from './actions/outputs.ts';
-import { createRunAction } from './actions/run.ts';
+import { HcpTfClient } from './HcpTfClient';
+import { HcpTerraformWorkspaceProvider } from './HcpTerraformWorkspaceProvider';
+import { createProvisionAction } from './actions/provision';
+import { createOutputsReadAction } from './actions/outputs';
+import { createRunAction } from './actions/run';
 
 /** Registers hcptf:* scaffolder actions into the scaffolder plugin. */
 export const hcpTerraformScaffolderModule = createBackendModule({

@@ -1,3 +1,3 @@
-export { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from './module.ts';
-export { HcpTfClient } from './HcpTfClient.ts';
-export { HcpTerraformWorkspaceProvider } from './HcpTerraformWorkspaceProvider.ts';
+export { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from './module';
+export { HcpTfClient } from './HcpTfClient';
+export { HcpTerraformWorkspaceProvider } from './HcpTerraformWorkspaceProvider';

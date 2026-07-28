@@ -7,7 +7,7 @@ import {
   SchedulerService,
 } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { HcpTfClient } from './HcpTfClient.ts';
+import { HcpTfClient } from './HcpTfClient';
 
 /** Module name to architecture layer */
 export const MODULE_LAYER: Record<string, string> = {

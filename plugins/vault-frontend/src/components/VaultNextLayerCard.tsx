@@ -17,12 +17,6 @@ const NEXT_BY_LAYER: Record<string, NextStep | undefined> = {
   },
 };
 
-/**
- * Shows a button on a vault-workspace Resource that deep-links to the template
- * for the next architecture layer, pre-selecting this workspace as the parent
- * and its tenant/environment target. The chosen values are passed to the
- * scaffolder via the `formData` query param.
- */
 export function VaultNextLayerCard() {
   const { entity } = useEntity();
   const ann = entity.metadata.annotations ?? {};

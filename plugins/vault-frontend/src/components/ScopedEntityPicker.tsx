@@ -14,22 +14,9 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import { useEffect, useMemo } from 'react';
 import useAsync from 'react-use/esm/useAsync';
 
-/**
- * `ui:options` accepted by {@link ScopedEntityPicker}.
- */
 export type ScopedEntityPickerUiOptions = {
-  /** Static catalog filter, same shape as EntityPicker's `catalogFilter`. */
   catalogFilter?: Record<string, unknown> | Record<string, unknown>[];
-  /**
-   * Name of a sibling form field whose selected entity defines the scope
-   * (e.g. `onboardedTarget`). Only candidates whose `scopeAnnotation` equals
-   * that entity's name are shown.
-   */
   scopeField?: string;
-  /**
-   * Candidate annotation compared against the scope entity's name.
-   * Defaults to `hcptf.io/target`.
-   */
   scopeAnnotation?: string;
 };
 
@@ -64,12 +51,6 @@ function buildCatalogFilter(
     : toQuery(catalogFilter);
 }
 
-/**
- * A scaffolder EntityPicker variant that additionally restricts the candidate
- * entities to those belonging to the tenant/environment selected in a sibling
- * form field. This prevents users from linking a Vault use-case to a parent
- * workspace that lives in a different tenant project.
- */
 export function ScopedEntityPicker(
   props: FieldExtensionComponentProps<string, ScopedEntityPickerUiOptions>,
 ) {

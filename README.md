@@ -64,10 +64,13 @@ This repository is a complete Backstage app, so the simplest path — if you do 
 
 > **Prerequisites / caveats (verify before you start):**
 > - Your app must use the **new Backstage frontend system** (`@backstage/frontend-defaults`, `createApp({ features: [...] })`) — the frontend modules below register that way and will not load in a legacy `createApp`/`App.tsx` route setup.
-> - The HCP Terraform plugin is a **private workspace package** (`@internal/plugin-hcp-terraform-backend`, `"private": true`) — it is **not published to npm**, so you copy it in rather than `yarn add` it.
+> - Both reusable plugins use the `@internal` scope. They can be installed from npm once published to a registry, or consumed directly as workspace packages (copy the directory and wire in `package.json`).
 > - The [nine no-code modules](#required-terraform-module-repositories) must already be published to *your* HCP Terraform organization's private registry.
 
-**1. Backend plugin.** Copy [`plugins/hcp-terraform-backend/`](plugins/hcp-terraform-backend) into your `plugins/` directory and add the workspace dependency to `packages/backend/package.json`:
+**1. Backend plugin.**
+
+- **Option A (npm, once published):** `yarn add @internal/plugin-hcp-terraform-backend`
+- **Option B (workspace):** Copy [`plugins/hcp-terraform-backend/`](plugins/hcp-terraform-backend) into your `plugins/` directory and add the workspace dependency to `packages/backend/package.json`:
 
 ```json
 "@internal/plugin-hcp-terraform-backend": "workspace:plugins/hcp-terraform-backend"
@@ -84,10 +87,23 @@ backend.add(hcpTerraformCatalogModule);    // vault-workspace catalog entity pro
 
 Optional: copy `packages/backend/src/permissions.ts` and `backend.add(vaultIdpPermissionModule)` for the owner-gated destroy policy.
 
-**2. Frontend modules.** Copy [`packages/app/src/modules/`](packages/app/src/modules) (`scaffolder`, `catalog`, `nav`) and add them to the `features` array in [`packages/app/src/App.tsx`](packages/app/src/App.tsx):
+**2. Frontend plugin.**
+
+- **Option A (npm, once published):** `yarn add @internal/plugin-vault-frontend`
+- **Option B (workspace):** Copy [`plugins/vault-frontend/`](plugins/vault-frontend) into your `plugins/` directory and add the workspace dependency to `packages/app/package.json`:
+
+```json
+"@internal/plugin-vault-frontend": "workspace:plugins/vault-frontend"
+```
+
+Then wire the modules in [`packages/app/src/App.tsx`](packages/app/src/App.tsx):
 
 ```ts
-features: [/* ...existing... */, navModule, catalogModule, scaffolderModule],
+import { vaultCatalogModule, vaultScaffolderModule } from '@internal/plugin-vault-frontend';
+
+export default createApp({
+  features: [/* ...existing... */, vaultCatalogModule, vaultScaffolderModule],
+});
 ```
 
 **3. Catalog entities and templates.** Copy the [`catalog/`](catalog) and [`templates/`](templates) directories and register them under `catalog.locations` in your `app-config.yaml` (see this repo's file for the four templates plus the module/system/org entities).
