@@ -4,7 +4,7 @@ Trust-layer module that creates one Vault JWT auth backend at `jwt-gitlab/<gitla
 
 ## Layer
 
-Trust. This module creates trust only. It does not create principals, policies, or secret engines.
+Trust. This module creates trust only. It does not create workloads, policies, or secret engines.
 
 ## Prerequisites
 
@@ -14,18 +14,18 @@ Trust. This module creates trust only. It does not create principals, policies, 
 ## No-code notes
 
 - This module is no-code ready and declares its own `vault` provider.
-- It creates trust only and outputs values for principal modules.
+- It creates trust only and outputs values for workload modules.
 - It uses a separate mount path from OCP trust (`jwt-gitlab/<gitlab_instance_name>`).
 
 ## Inputs
 
 | Name | Type | Description |
 |---|---|---|
-| `gitlab_instance_name` | `string` | One of `cloud`, `dedicated_prod`, `dedicated_dev` |
+| `gitlab_instance_name` | `string` | One of `cloud`, `dedicated-prod`, `dedicated-dev` |
 | `oidc_discovery_url` | `string` | Discovery URL, mutually exclusive; accepts base or `.well-known` form, normalised automatically |
 | `jwt_issuer` | `string` | Optional `bound_issuer`; derived from `oidc_discovery_url` when empty |
 | `jwks_url` | `string` | Optional JWKS URL, mutually exclusive |
-| `jwt_validation_pubkeys` | `list(string)` | Optional PEM keys, mutually exclusive |
+| `jwt_validation_pubkey` | `string` | Single PEM public key for JWT validation; leave empty to use OIDC discovery or JWKS URL |
 | `default_lease_ttl` | `string` | Tune default TTL, default `1h` |
 | `max_lease_ttl` | `string` | Tune max TTL, default `24h` |
 
@@ -39,16 +39,16 @@ Trust. This module creates trust only. It does not create principals, policies, 
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `gitlab_instance_name` is presented as a **dropdown** limited to `cloud`, `dedicated_prod`, `dedicated_dev`.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.3.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `gitlab_instance_name` is presented as a **dropdown** limited to `cloud`, `dedicated-prod`, `dedicated-dev`.
 
-> **No-code UX note:** The `gitlab_instance_name` dropdown is driven by explicit no-code `variable-options` configured on the module in the registry, not by the module's `contains()` validation (which only validates on submit). These options (`cloud`, `dedicated_prod`, `dedicated_dev`) are a registry-side setting applied via the `tfe_no_code_module` resource or the no-code modules API. They are not stored in this repository, so re-enabling no-code provisioning for the module requires re-applying them.
+> **No-code UX note:** The `gitlab_instance_name` dropdown is driven by explicit no-code `variable-options` configured on the module in the registry, not by the module's `contains()` validation (which only validates on submit). These options (`cloud`, `dedicated-prod`, `dedicated-dev`) are a registry-side setting applied via the `tfe_no_code_module` resource or the no-code modules API. They are not stored in this repository, so re-enabling no-code provisioning for the module requires re-applying them.
 
 Form fields:
 
 | Field | Required | Notes |
 |---|---|---|
-| `gitlab_instance_name` | yes | Dropdown: `cloud` / `dedicated_prod` / `dedicated_dev` |
-| `oidc_discovery_url` / `jwks_url` / `jwt_validation_pubkeys` | yes | Set exactly one; discovery URL accepts base or `.well-known` form |
+| `gitlab_instance_name` | yes | Dropdown: `cloud` / `dedicated-prod` / `dedicated-dev` |
+| `oidc_discovery_url` / `jwks_url` / `jwt_validation_pubkey` | yes | Set exactly one; discovery URL accepts base or `.well-known` form |
 | `jwt_issuer` | no | Derived from `oidc_discovery_url` when empty |
 
 ## Registry usage
@@ -56,7 +56,7 @@ Form fields:
 ```hcl
 module "gitlab_onboarding" {
   source  = "app.terraform.io/<org>/gitlab-onboarding/vault"
-  version = "~> 0.1.0"
+  version = "~> 0.3.0"
 
   gitlab_instance_name = "cloud"
   oidc_discovery_url = "https://gitlab.com"
@@ -102,9 +102,9 @@ No modules.
 | <a name="input_gitlab_instance_name"></a> [gitlab\_instance\_name](#input\_gitlab\_instance\_name) | GitLab instance scope used in trust mount naming. | `string` | n/a | yes |
 | <a name="input_jwks_url"></a> [jwks\_url](#input\_jwks\_url) | Optional JWKS URL for JWT signature verification. | `string` | `""` | no |
 | <a name="input_jwt_issuer"></a> [jwt\_issuer](#input\_jwt\_issuer) | Optional GitLab OIDC issuer (bound\_issuer). Derived from oidc\_discovery\_url when empty. | `string` | `""` | no |
-| <a name="input_jwt_validation_pubkeys"></a> [jwt\_validation\_pubkeys](#input\_jwt\_validation\_pubkeys) | Optional PEM public keys for JWT signature verification. | `list(string)` | `[]` | no |
+| <a name="input_jwt_validation_pubkey"></a> [jwt\_validation\_pubkey](#input\_jwt\_validation\_pubkey) | Single PEM public key for JWT validation. Leave empty to use OIDC discovery or JWKS URL instead. | `string` | `""` | no |
 | <a name="input_max_lease_ttl"></a> [max\_lease\_ttl](#input\_max\_lease\_ttl) | Maximum lease TTL for the JWT auth backend tune block. | `string` | `"24h"` | no |
-| <a name="input_oidc_discovery_url"></a> [oidc\_discovery\_url](#input\_oidc\_discovery\_url) | OIDC discovery URL for JWT auth backend config. Set exactly one of oidc\_discovery\_url, jwks\_url, or jwt\_validation\_pubkeys. | `string` | n/a | yes |
+| <a name="input_oidc_discovery_url"></a> [oidc\_discovery\_url](#input\_oidc\_discovery\_url) | OIDC discovery URL for JWT auth backend config. Set exactly one of oidc\_discovery\_url, jwks\_url, or jwt\_validation\_pubkey. | `string` | `""` | no |
 
 ## Outputs
 
@@ -112,4 +112,4 @@ No modules.
 | ---- | ----------- |
 | <a name="output_gitlab_instance_name"></a> [gitlab\_instance\_name](#output\_gitlab\_instance\_name) | Echo of gitlab\_instance\_name input. |
 | <a name="output_jwt_auth_path"></a> [jwt\_auth\_path](#output\_jwt\_auth\_path) | JWT auth backend path for this GitLab trust mount. |
-| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in principal modules. |
+| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in workload modules. |

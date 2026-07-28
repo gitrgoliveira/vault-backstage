@@ -1,6 +1,6 @@
 # terraform-vault-add-permission-group
 
-Use-case module that creates a custom ACL policy for any Vault path and grants it to one principal entity via identity group membership.
+Use-case module that creates a custom ACL policy for any Vault path and grants it to one workload entity via identity group membership.
 
 ## Layer
 
@@ -8,16 +8,15 @@ Use-case.
 
 ## Prerequisites
 
-- Principal module output `entity_id`
+- The workload module must be applied first so the entity `<cluster_name>-<workload_name>` exists in Vault.
 
 ## Inputs
 
 | Name | Type | Description |
 |---|---|---|
 | `cluster_name` | `string` | Cluster identifier, regex validated |
-| `principal_name` | `string` | Principal identifier, regex validated |
+| `workload_name` | `string` | Workload identifier, regex validated |
 | `usecase_name` | `string` | Use-case identifier, regex validated |
-| `entity_id` | `string` | Principal entity ID |
 | `secret_path` | `string` | Vault path expression |
 | `capability_read` | `bool` | Read capability flag, default `true` |
 | `capability_create` | `bool` | Create capability flag, default `false` |
@@ -42,16 +41,15 @@ Use-case.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.0.2`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Capability flags render as checkboxes; at least one must be enabled.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.2.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Capability flags render as checkboxes; at least one must be enabled.
 
 Form fields:
 
 | Field | Required | Notes |
 |---|---|---|
 | `cluster_name` | yes | Cluster identifier |
-| `principal_name` | yes | Principal identifier |
+| `workload_name` | yes | Workload identifier |
 | `usecase_name` | yes | Use-case identifier |
-| `entity_id` | yes | Principal entity ID |
 | `secret_path` | yes | Vault path expression |
 | `capability_*` | no | Read/list default true; others default false |
 
@@ -60,12 +58,11 @@ Form fields:
 ```hcl
 module "add_permission_group" {
   source  = "app.terraform.io/<org>/add-permission-group/vault"
-  version = "~> 0.0.2"
+  version = "~> 0.2.0"
 
   cluster_name      = "ocp-prod-eu"
-  principal_name    = "payments"
+  workload_name     = "payments"
   usecase_name      = "audit-access"
-  entity_id         = "11111111-2222-3333-4444-555555555555"
   secret_path       = "secret/data/payments/audit/*"
   capability_read   = true
   capability_list   = true
@@ -104,6 +101,7 @@ No modules.
 | ---- | ---- |
 | [vault_identity_group.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/identity_group) | resource |
 | [vault_policy.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/policy) | resource |
+| [vault_identity_entity.workload](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/data-sources/identity_entity) | data source |
 
 ## Inputs
 
@@ -117,10 +115,9 @@ No modules.
 | <a name="input_capability_sudo"></a> [capability\_sudo](#input\_capability\_sudo) | Whether to grant sudo capability. | `bool` | `false` | no |
 | <a name="input_capability_update"></a> [capability\_update](#input\_capability\_update) | Whether to grant update capability. | `bool` | `false` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster identifier used in policy and group naming. | `string` | n/a | yes |
-| <a name="input_entity_id"></a> [entity\_id](#input\_entity\_id) | Vault entity ID that receives this custom policy via identity group membership. | `string` | n/a | yes |
-| <a name="input_principal_name"></a> [principal\_name](#input\_principal\_name) | Principal identifier used in policy and group naming. | `string` | n/a | yes |
 | <a name="input_secret_path"></a> [secret\_path](#input\_secret\_path) | Vault path expression to grant capabilities on. | `string` | n/a | yes |
 | <a name="input_usecase_name"></a> [usecase\_name](#input\_usecase\_name) | Use-case identifier used in policy and group naming. | `string` | n/a | yes |
+| <a name="input_workload_name"></a> [workload\_name](#input\_workload\_name) | Workload identifier used in policy and group naming. | `string` | n/a | yes |
 
 ## Outputs
 

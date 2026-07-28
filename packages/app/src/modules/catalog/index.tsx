@@ -1,5 +1,8 @@
 import { createFrontendModule } from '@backstage/frontend-plugin-api';
-import { EntityCardBlueprint } from '@backstage/plugin-catalog-react/alpha';
+import {
+  CatalogFilterBlueprint,
+  EntityCardBlueprint,
+} from '@backstage/plugin-catalog-react/alpha';
 import type { Entity } from '@backstage/catalog-model';
 
 /**
@@ -35,7 +38,20 @@ const vaultNextLayerCard = EntityCardBlueprint.make({
   },
 });
 
+/**
+ * Adds a "Layer" filter to the catalog list-page sidebar so users can narrow
+ * vault-workspace Resources by the `/create` card they came from
+ * (trust / workload / usecase), read from the `hcptf.io/layer` annotation.
+ */
+const vaultLayerFilter = CatalogFilterBlueprint.make({
+  name: 'vault-layer',
+  params: {
+    loader: () =>
+      import('./VaultLayerPicker').then(m => <m.VaultLayerPicker />),
+  },
+});
+
 export const catalogModule = createFrontendModule({
   pluginId: 'catalog',
-  extensions: [vaultWorkspaceOutputsCard, vaultNextLayerCard],
+  extensions: [vaultWorkspaceOutputsCard, vaultNextLayerCard, vaultLayerFilter],
 });

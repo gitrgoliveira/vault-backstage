@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: vault-l3-usecase
   title: Vault Use-case Onboarding (Layer 3)
-  description: Grant a Kubernetes or GitLab principal a secret use-case (KVv2, PostgreSQL role, or custom ACL), or configure a PostgreSQL connection.
+  description: Grant a Kubernetes or GitLab workload a secret use-case (KVv2, PostgreSQL role, or custom ACL), or configure a PostgreSQL connection.
   tags: [vault, usecase]
 spec:
   owner: group:default/vault-platform
@@ -39,45 +39,33 @@ spec:
           type: string
           enum: [kvv2, kvv2-gitlab, pgsql-role, permission-group, pgsql-connection]
           enumNames:
-            - "KV v2 access (Kubernetes principal)"
-            - "KV v2 access (GitLab principal)"
+            - "KV v2 access (Kubernetes workload)"
+            - "KV v2 access (GitLab workload)"
             - "PostgreSQL static role access"
             - "Custom ACL permission group"
             - "PostgreSQL connection (DBA root config)"
       dependencies:
         useCaseType:
           oneOf:
-            - required: [usecaseName, clusterName, principalName, parentTrustWorkspace, parentPrincipalWorkspace]
+            - required: [usecaseName, clusterName, workloadName, parentWorkloadWorkspace]
               properties:
                 useCaseType:
                   enum: [kvv2]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                principalName: { title: Principal Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                k8sNamespace: { title: Kubernetes Namespace (optional), type: string }
-                parentTrustWorkspace:
-                  title: Parent Trust Workspace
+                workloadName: { title: Workload Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                parentWorkloadWorkspace:
+                  title: Parent Workload Workspace
                   type: string
-                  description: Cluster trust (Layer 1) in the selected tenant that provides jwt_auth_path.
+                  description: Kubernetes workload (Layer 2) in the selected tenant that receives KV read access.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: trust
+                      metadata.annotations.hcptf.io/layer: workload
                     scopeField: onboardedTarget
-                parentPrincipalWorkspace:
-                  title: Parent Principal Workspace
-                  type: string
-                  description: Kubernetes principal (Layer 2) in the selected tenant that receives KV read access.
-                  ui:field: ScopedEntityPicker
-                  ui:options:
-                    catalogFilter:
-                      kind: Resource
-                      spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: principal
-                    scopeField: onboardedTarget
-            - required: [usecaseName, scopeName, parentGitlabTrust, parentGitlabPrincipal]
+            - required: [usecaseName, scopeName, parentGitlabWorkload]
               properties:
                 useCaseType:
                   enum: [kvv2-gitlab]
@@ -85,23 +73,12 @@ spec:
                 scopeName:
                   title: KV Scope / Path Prefix
                   type: string
-                  description: Naming prefix for the KV mount, policy, and group (e.g. gitlab or the group name). The principal name is taken from the selected GitLab principal.
+                  description: Naming prefix for the KV mount, policy, and group (e.g. gitlab or the group name). The workload name is taken from the selected GitLab workload.
                   pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
-                parentGitlabTrust:
-                  title: Parent GitLab Trust Workspace
+                parentGitlabWorkload:
+                  title: Parent GitLab Workload Workspace
                   type: string
-                  description: GitLab trust (Layer 1) in the selected tenant that provides jwt_auth_path.
-                  ui:field: ScopedEntityPicker
-                  ui:options:
-                    catalogFilter:
-                      kind: Resource
-                      spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/module-name: terraform-vault-gitlab-onboarding
-                    scopeField: onboardedTarget
-                parentGitlabPrincipal:
-                  title: Parent GitLab Principal Workspace
-                  type: string
-                  description: GitLab project principal (Layer 2) in the selected tenant that receives KV read access.
+                  description: GitLab project workload (Layer 2) in the selected tenant that receives KV read access.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
@@ -109,35 +86,24 @@ spec:
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-add-gitlab-project-access
                     scopeField: onboardedTarget
-            - required: [usecaseName, clusterName, principalName, dbUsername, parentTrustWorkspace, parentPrincipalWorkspace, parentPgsqlWorkspace]
+            - required: [usecaseName, clusterName, workloadName, dbUsername, parentWorkloadWorkspace, parentPgsqlWorkspace]
               properties:
                 useCaseType:
                   enum: [pgsql-role]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                principalName: { title: Principal Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                workloadName: { title: Workload Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 dbUsername: { title: Database Username, type: string }
-                parentTrustWorkspace:
-                  title: Parent Trust Workspace
+                parentWorkloadWorkspace:
+                  title: Parent Workload Workspace
                   type: string
-                  description: Cluster trust (Layer 1) in the selected tenant that provides jwt_auth_path.
+                  description: Workload (Layer 2) in the selected tenant that receives database access.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: trust
-                    scopeField: onboardedTarget
-                parentPrincipalWorkspace:
-                  title: Parent Principal Workspace
-                  type: string
-                  description: Principal (Layer 2) in the selected tenant that receives database access.
-                  ui:field: ScopedEntityPicker
-                  ui:options:
-                    catalogFilter:
-                      kind: Resource
-                      spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: principal
+                      metadata.annotations.hcptf.io/layer: workload
                     scopeField: onboardedTarget
                 parentPgsqlWorkspace:
                   title: Parent PostgreSQL Connection Workspace
@@ -150,24 +116,24 @@ spec:
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-pgsql-onboarding
                     scopeField: onboardedTarget
-            - required: [usecaseName, clusterName, principalName, secretPath, parentPrincipalWorkspace]
+            - required: [usecaseName, clusterName, workloadName, secretPath, parentWorkloadWorkspace]
               properties:
                 useCaseType:
                   enum: [permission-group]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                principalName: { title: Principal Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
+                workloadName: { title: Workload Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 secretPath: { title: Vault Secret Path, type: string }
-                parentPrincipalWorkspace:
-                  title: Parent Principal Workspace
+                parentWorkloadWorkspace:
+                  title: Parent Workload Workspace
                   type: string
-                  description: Principal (Layer 2) in the selected tenant that receives this permission group.
+                  description: Workload (Layer 2) in the selected tenant that receives this permission group.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: principal
+                      metadata.annotations.hcptf.io/layer: workload
                     scopeField: onboardedTarget
                 capabilityRead: { type: boolean, default: true, title: read }
                 capabilityCreate: { type: boolean, default: false, title: create }
@@ -192,19 +158,12 @@ spec:
       input:
         entityRef: ${{ parameters.onboardedTarget }}
 
-    - id: fetch-trust
-      name: Fetch parent trust workspace
-      if: ${{ parameters.useCaseType === "kvv2" || parameters.useCaseType === "pgsql-role" }}
-      action: catalog:fetch
-      input:
-        entityRef: ${{ parameters.parentTrustWorkspace }}
-
-    - id: fetch-principal
-      name: Fetch parent principal workspace
+    - id: fetch-workload
+      name: Fetch parent workload workspace
       if: ${{ parameters.useCaseType === "kvv2" || parameters.useCaseType === "pgsql-role" || parameters.useCaseType === "permission-group" }}
       action: catalog:fetch
       input:
-        entityRef: ${{ parameters.parentPrincipalWorkspace }}
+        entityRef: ${{ parameters.parentWorkloadWorkspace }}
 
     - id: fetch-pgsql
       name: Fetch parent PostgreSQL connection workspace
@@ -213,19 +172,12 @@ spec:
       input:
         entityRef: ${{ parameters.parentPgsqlWorkspace }}
 
-    - id: fetch-gitlab-trust
-      name: Fetch parent GitLab trust workspace
+    - id: fetch-gitlab-workload
+      name: Fetch parent GitLab workload workspace
       if: ${{ parameters.useCaseType === "kvv2-gitlab" }}
       action: catalog:fetch
       input:
-        entityRef: ${{ parameters.parentGitlabTrust }}
-
-    - id: fetch-gitlab-principal
-      name: Fetch parent GitLab principal workspace
-      if: ${{ parameters.useCaseType === "kvv2-gitlab" }}
-      action: catalog:fetch
-      input:
-        entityRef: ${{ parameters.parentGitlabPrincipal }}
+        entityRef: ${{ parameters.parentGitlabWorkload }}
 
     - id: kvv2
       name: Provision KVv2 access
@@ -235,16 +187,12 @@ spec:
         workspaceName: ${{ parameters.workspaceName }}
         moduleName: terraform-vault-add-kvv2
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
-        parentWorkspaceName: ${{ steps['fetch-principal'].output.entity.metadata.name }}
+        parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.clusterName }}
-          principal_name: ${{ parameters.principalName }}
-          k8s_namespace: ${{ parameters.k8sNamespace }}
+          workload_name: ${{ parameters.workloadName }}
           integration_type: kubernetes
-          entity_id: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
-          auth_role_name: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
-          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
 
     - id: kvv2-gitlab
       name: Provision KVv2 access (GitLab)
@@ -254,15 +202,12 @@ spec:
         workspaceName: ${{ parameters.workspaceName }}
         moduleName: terraform-vault-add-kvv2
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
-        parentWorkspaceName: ${{ steps['fetch-gitlab-principal'].output.entity.metadata.name }}
+        parentWorkspaceName: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.scopeName }}
-          principal_name: ${{ steps['fetch-gitlab-principal'].output.entity.metadata.annotations['hcptf.io/output.principal_name'] }}
+          workload_name: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           integration_type: gitlab
-          entity_id: ${{ steps['fetch-gitlab-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
-          auth_role_name: ${{ steps['fetch-gitlab-principal'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
-          jwt_auth_path: ${{ steps['fetch-gitlab-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
 
     - id: pgsql-role
       name: Provision PostgreSQL role access
@@ -272,15 +217,12 @@ spec:
         workspaceName: ${{ parameters.workspaceName }}
         moduleName: terraform-vault-add-pgsql-role
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
-        parentWorkspaceName: ${{ steps['fetch-principal'].output.entity.metadata.name }}
+        parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.clusterName }}
-          principal_name: ${{ parameters.principalName }}
+          workload_name: ${{ parameters.workloadName }}
           db_username: ${{ parameters.dbUsername }}
-          entity_id: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
-          auth_role_name: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
-          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
           db_mount_path: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_mount_path'] }}
           db_connection_name: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_connection_name'] }}
 
@@ -292,13 +234,12 @@ spec:
         workspaceName: ${{ parameters.workspaceName }}
         moduleName: terraform-vault-add-permission-group
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
-        parentWorkspaceName: ${{ steps['fetch-principal'].output.entity.metadata.name }}
+        parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.clusterName }}
-          principal_name: ${{ parameters.principalName }}
+          workload_name: ${{ parameters.workloadName }}
           secret_path: ${{ parameters.secretPath }}
-          entity_id: ${{ steps['fetch-principal'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
           capability_read: ${{ parameters.capabilityRead }}
           capability_create: ${{ parameters.capabilityCreate }}
           capability_update: ${{ parameters.capabilityUpdate }}

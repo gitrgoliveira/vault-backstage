@@ -299,7 +299,6 @@ export class HcpTfClient {
     }
   }
 
-
   private headers(): Record<string, string> {
     return {
       'Content-Type': 'application/vnd.api+json',
@@ -331,7 +330,7 @@ export class HcpTfClient {
           `HCP TF API ${method} ${path} -> ${res.status}; retrying in ${delayMs}ms ` +
             `(attempt ${attempt + 1}/${maxRetries}).`,
         );
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await sleep(delayMs);
         continue;
       }
       break;
@@ -613,7 +612,6 @@ export class HcpTfClient {
         `(workspace ${workspaceId}) to finish. Last status: ${lastStatus || 'unknown'}. See ${runUrl}`,
     );
   }
-
 
   /** Read current state version outputs for a workspace. */
   async readOutputs(workspaceId: string): Promise<WorkspaceOutput[]> {

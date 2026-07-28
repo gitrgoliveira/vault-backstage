@@ -5,11 +5,11 @@
  * re-provisioning. Mirrors the provider's ingestion filter (Vault-suite module
  * AND Product:Vault-tagged project) and infers each child's parent from the
  * strongest available signal:
- *   - k8s principal  -> trust:      child var jwt_auth_path == trust output jwt_auth_path
- *   - gitlab principal -> trust:    the sole gitlab-onboarding trust in the project
+ *   - k8s workload  -> trust:       child var jwt_auth_path == trust output jwt_auth_path
+ *   - gitlab workload -> trust:     the sole gitlab-onboarding trust in the project
  *                                   (or matched on gitlab_instance_name)
- *   - use-case -> principal:        child var entity_id == principal output entity_id
- *                                   (falls back to principal_name)
+ *   - use-case -> workload:         child var entity_id == workload output entity_id
+ *                                   (falls back to workload_name, or legacy principal_name)
  *
  * Dry-run by default; pass --apply to write the tags. Never prints the token.
  * Env: HCP_TF_ORGANIZATION, HCP_TF_TOKEN, HCP_TF_BASE_URL (optional).
@@ -62,8 +62,8 @@ const LAYER = {
   'cluster-onboarding': 'trust',
   'gitlab-onboarding': 'trust',
   'hcptf-onboarding': 'trust',
-  'add-k8s-namespace-access': 'principal',
-  'add-gitlab-project-access': 'principal',
+  'add-k8s-namespace-access': 'workload',
+  'add-gitlab-project-access': 'workload',
   'add-kvv2': 'usecase',
   'add-pgsql-role': 'usecase',
   'add-permission-group': 'usecase',
@@ -130,7 +130,7 @@ for (const w of wss) {
 
 function inferParent(child, peers) {
   const others = l => peers.filter(p => p.layer === l && p.id !== child.id);
-  if (child.layer === 'principal') {
+  if (child.layer === 'workload') {
     const trusts = others('trust');
     if (child.module === 'add-k8s-namespace-access') {
       const jp = child.vars['jwt_auth_path'];
@@ -151,18 +151,20 @@ function inferParent(child, peers) {
     return null;
   }
   if (child.layer === 'usecase') {
-    const principals = others('principal');
+    const workloads = others('workload');
     const eid = child.vars['entity_id'];
-    let m = eid ? principals.find(p => p.outputs['entity_id'] === eid) : undefined;
+    let m = eid ? workloads.find(p => p.outputs['entity_id'] === eid) : undefined;
     if (!m) {
-      const pn = child.vars['principal_name'];
+      const pn = child.vars['workload_name'] ?? child.vars['principal_name'];
       m = pn
-        ? principals.find(
-            p => p.vars['principal_name'] === pn || String(p.outputs['auth_role_name'] ?? '').includes(pn),
+        ? workloads.find(
+            p =>
+              (p.vars['workload_name'] ?? p.vars['principal_name']) === pn ||
+              String(p.outputs['auth_role_name'] ?? '').includes(pn),
           )
         : undefined;
     }
-    if (m) return { parent: m, why: eid ? `entity_id=${eid}` : `principal_name=${child.vars['principal_name']}` };
+    if (m) return { parent: m, why: eid ? `entity_id=${eid}` : `workload_name=${child.vars['workload_name'] ?? child.vars['principal_name']}` };
     return null;
   }
   return null;

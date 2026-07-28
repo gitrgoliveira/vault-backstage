@@ -14,8 +14,8 @@ export const MODULE_LAYER: Record<string, string> = {
   'terraform-vault-cluster-onboarding': 'trust',
   'terraform-vault-gitlab-onboarding': 'trust',
   'terraform-vault-hcptf-onboarding': 'trust',
-  'terraform-vault-add-k8s-namespace-access': 'principal',
-  'terraform-vault-add-gitlab-project-access': 'principal',
+  'terraform-vault-add-k8s-namespace-access': 'workload',
+  'terraform-vault-add-gitlab-project-access': 'workload',
   'terraform-vault-add-kvv2': 'usecase',
   'terraform-vault-add-pgsql-role': 'usecase',
   'terraform-vault-add-permission-group': 'usecase',
@@ -49,7 +49,7 @@ export function canonicalModuleName(moduleName: string): string {
 function layerToSystem(layer: string): string {
   const map: Record<string, string> = {
     trust: 'vault-trust',
-    principal: 'vault-principal',
+    workload: 'vault-workload',
     usecase: 'vault-usecase',
   };
   return map[layer] ?? 'vault-self-service';

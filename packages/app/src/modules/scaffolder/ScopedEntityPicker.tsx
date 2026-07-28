@@ -86,14 +86,8 @@ export function ScopedEntityPicker(
 
   const options = uiSchema['ui:options'] ?? {};
   const catalogApi = useApi(catalogApiRef);
-  const filter = buildCatalogFilter(options);
+  const filter = useMemo(() => buildCatalogFilter(options), [uiSchema]);
 
-  // Seed the field with an empty string when it is undefined so its key is
-  // present in the form data. The scaffolder only runs custom field validation
-  // for keys that exist in form data, and RJSF strips untouched string fields
-  // (especially inside `dependencies.oneOf`) to `undefined`. Without this, a
-  // never-touched required picker would skip validation and reach the backend
-  // empty, failing `catalog:fetch` with an opaque "Missing entity reference".
   useEffect(() => {
     if (formData === undefined) {
       onChange('');
@@ -130,7 +124,7 @@ export function ScopedEntityPicker(
       ],
     });
     return items;
-  }, [catalogApi, JSON.stringify(filter)]);
+  }, [catalogApi, filter]);
 
   const scoped = useMemo(() => {
     const items = entities ?? [];

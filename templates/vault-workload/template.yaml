@@ -1,20 +1,20 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: vault-l2-principal
-  title: Vault Principal Onboarding (Layer 2)
+  name: vault-l2-workload
+  title: Vault Workload Onboarding (Layer 2)
   description: Onboard a Kubernetes ServiceAccount or GitLab project as a Vault identity.
-  tags: [vault, principal]
+  tags: [vault, workload]
 spec:
   owner: group:default/vault-platform
   type: infrastructure
   parameters:
-    - title: Target & principal type
+    - title: Target & workload type
       required:
         - onboardedTarget
         - workspaceName
-        - principalType
-        - principalName
+        - workloadType
+        - workloadName
       properties:
         onboardedTarget:
           title: Tenant / Environment
@@ -35,10 +35,10 @@ spec:
           type: string
           description: >-
             Unique name for the new HCP Terraform workspace that will hold this
-            principal. Example: sdi-dev-payments-gitlab.
+            workload. Example: sdi-dev-payments-gitlab.
           pattern: "^[A-Za-z0-9_-]+$"
-        principalName:
-          title: Principal Name
+        workloadName:
+          title: Workload Name
           type: string
           description: >-
             A short, unique identity name for the workload you are onboarding
@@ -46,23 +46,23 @@ spec:
             Downstream "use-case" templates (KV, database, permissions) reference
             this exact name to grant it access. Example: payments-api.
           pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
-        principalType:
-          title: Principal Type
+        workloadType:
+          title: Workload Type
           type: string
           enum: [k8s, gitlab]
           enumNames: ["Kubernetes / OpenShift ServiceAccount", "GitLab project"]
       dependencies:
-        principalType:
+        workloadType:
           oneOf:
             - required: [clusterName, ocpNamespace, serviceAccountName, parentTrustWorkspace]
               properties:
-                principalType:
+                workloadType:
                   enum: [k8s]
                 clusterName:
                   title: Cluster Name
                   type: string
                   description: >-
-                    Name of the cluster trust this principal lives under. Must
+                    Name of the cluster trust this workload lives under. Must
                     match the cluster_name used when the cluster trust was
                     onboarded (Layer 1).
                   pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
@@ -79,7 +79,7 @@ spec:
                   type: string
                   description: >-
                     The cluster trust workspace (Layer 1) that provides
-                    jwt_auth_path and jwt_mount_accessor for this principal.
+                    jwt_auth_path and jwt_mount_accessor for this workload.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
@@ -89,13 +89,13 @@ spec:
                     scopeField: onboardedTarget
             - required: [gitlabInstanceName, gitlabProjectId, gitlabProjectPath, parentGitlabTrust]
               properties:
-                principalType:
+                workloadType:
                   enum: [gitlab]
                 gitlabInstanceName:
                   title: GitLab Instance
                   type: string
                   description: Which GitLab instance hosts the project (must match the onboarded GitLab trust).
-                  enum: [cloud, dedicated_prod, dedicated_dev]
+                  enum: [cloud, dedicated-prod, dedicated-dev]
                 gitlabProjectId:
                   title: GitLab Project ID
                   type: string
@@ -127,21 +127,21 @@ spec:
 
     - id: fetch-trust
       name: Fetch parent trust workspace
-      if: ${{ parameters.principalType === "k8s" }}
+      if: ${{ parameters.workloadType === "k8s" }}
       action: catalog:fetch
       input:
         entityRef: ${{ parameters.parentTrustWorkspace }}
 
     - id: fetch-gitlab-trust
       name: Fetch parent GitLab trust workspace
-      if: ${{ parameters.principalType === "gitlab" }}
+      if: ${{ parameters.workloadType === "gitlab" }}
       action: catalog:fetch
       input:
         entityRef: ${{ parameters.parentGitlabTrust }}
 
     - id: k8s
-      name: Provision Kubernetes principal
-      if: ${{ parameters.principalType === "k8s" }}
+      name: Provision Kubernetes workload
+      if: ${{ parameters.workloadType === "k8s" }}
       action: hcptf:nocode:provision
       input:
         workspaceName: ${{ parameters.workspaceName }}
@@ -150,15 +150,13 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-trust'].output.entity.metadata.name }}
         vars:
           cluster_name: ${{ parameters.clusterName }}
-          principal_name: ${{ parameters.principalName }}
+          workload_name: ${{ parameters.workloadName }}
           ocp_namespace: ${{ parameters.ocpNamespace }}
           service_account_name: ${{ parameters.serviceAccountName }}
-          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
-          jwt_mount_accessor: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_mount_accessor'] }}
 
     - id: gitlab
-      name: Provision GitLab principal
-      if: ${{ parameters.principalType === "gitlab" }}
+      name: Provision GitLab workload
+      if: ${{ parameters.workloadType === "gitlab" }}
       action: hcptf:nocode:provision
       input:
         workspaceName: ${{ parameters.workspaceName }}
@@ -167,7 +165,7 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-gitlab-trust'].output.entity.metadata.name }}
         vars:
           gitlab_instance_name: ${{ parameters.gitlabInstanceName }}
-          principal_name: ${{ parameters.principalName }}
+          workload_name: ${{ parameters.workloadName }}
           gitlab_project_id: ${{ parameters.gitlabProjectId }}
           gitlab_project_path: ${{ parameters.gitlabProjectPath }}
 

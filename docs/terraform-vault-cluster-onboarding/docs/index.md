@@ -4,7 +4,7 @@ Trust-layer module that creates one Vault JWT auth backend at `jwt/<cluster_name
 
 ## Layer
 
-Trust. This module creates trust only. It does not create principals, policies, or secret engines.
+Trust. This module creates trust only. It does not create workloads, policies, or secret engines.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 ## No-code notes
 
 - This module is no-code ready and declares its own `vault` provider.
-- It creates trust only and outputs values for principal modules.
+- It creates trust only and outputs values for workload modules.
 - It does not set resource-level `namespace`.
 
 ## Inputs
@@ -25,7 +25,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 | `jwt_issuer` | `string` | OIDC issuer URL |
 | `oidc_discovery_url` | `string` | Optional discovery URL, mutually exclusive |
 | `jwks_url` | `string` | Optional JWKS URL, mutually exclusive |
-| `jwt_validation_pubkeys` | `list(string)` | Optional PEM keys, mutually exclusive |
+| `jwt_validation_pubkey` | `string` | Optional single PEM public key, mutually exclusive |
 | `default_lease_ttl` | `string` | Tune default TTL, default `1h` |
 | `max_lease_ttl` | `string` | Tune max TTL, default `24h` |
 
@@ -39,7 +39,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). To deploy without writing HCL: open the module in the registry, click **Provision workspace**, choose a project and workspace name, then complete the form.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.2.0`). To deploy without writing HCL: open the module in the registry, click **Provision workspace**, choose a project and workspace name, then complete the form.
 
 Form fields:
 
@@ -47,7 +47,7 @@ Form fields:
 |---|---|---|
 | `cluster_name` | yes | Cluster identifier |
 | `jwt_issuer` | yes | OIDC issuer URL |
-| `oidc_discovery_url` / `jwks_url` / `jwt_validation_pubkeys` | yes | Set exactly one |
+| `oidc_discovery_url` / `jwks_url` / `jwt_validation_pubkey` | yes | Set exactly one |
 | `default_lease_ttl` / `max_lease_ttl` | no | Tune TTLs |
 
 The first run plans automatically after the workspace is created.
@@ -57,7 +57,7 @@ The first run plans automatically after the workspace is created.
 ```hcl
 module "cluster_onboarding" {
   source  = "app.terraform.io/<org>/cluster-onboarding/vault"
-  version = "~> 0.1.0"
+  version = "~> 0.2.0"
 
   cluster_name       = "ocp-prod-eu"
   jwt_issuer         = "https://kubernetes.default.svc"
@@ -104,7 +104,7 @@ No modules.
 | <a name="input_default_lease_ttl"></a> [default\_lease\_ttl](#input\_default\_lease\_ttl) | Default lease TTL for the JWT auth backend tune block. | `string` | `"1h"` | no |
 | <a name="input_jwks_url"></a> [jwks\_url](#input\_jwks\_url) | Optional JWKS URL for JWT signature verification. | `string` | `""` | no |
 | <a name="input_jwt_issuer"></a> [jwt\_issuer](#input\_jwt\_issuer) | OIDC issuer URL used as bound\_issuer for the JWT auth backend. | `string` | n/a | yes |
-| <a name="input_jwt_validation_pubkeys"></a> [jwt\_validation\_pubkeys](#input\_jwt\_validation\_pubkeys) | Optional PEM public keys for JWT signature verification. | `list(string)` | `[]` | no |
+| <a name="input_jwt_validation_pubkey"></a> [jwt\_validation\_pubkey](#input\_jwt\_validation\_pubkey) | Single PEM public key for JWT validation. Leave empty to use OIDC discovery or JWKS URL instead. | `string` | `""` | no |
 | <a name="input_max_lease_ttl"></a> [max\_lease\_ttl](#input\_max\_lease\_ttl) | Maximum lease TTL for the JWT auth backend tune block. | `string` | `"24h"` | no |
 | <a name="input_oidc_discovery_url"></a> [oidc\_discovery\_url](#input\_oidc\_discovery\_url) | Optional OIDC discovery URL for JWT auth backend config. | `string` | `""` | no |
 
@@ -114,4 +114,4 @@ No modules.
 | ---- | ----------- |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Echo of cluster\_name input. |
 | <a name="output_jwt_auth_path"></a> [jwt\_auth\_path](#output\_jwt\_auth\_path) | JWT auth backend path for this cluster trust mount. |
-| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in principal modules. |
+| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in workload modules. |

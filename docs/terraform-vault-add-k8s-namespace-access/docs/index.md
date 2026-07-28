@@ -1,14 +1,14 @@
 # terraform-vault-add-k8s-namespace-access
 
-Principal-layer module that onboards one Kubernetes or OpenShift ServiceAccount as a Vault identity entity, alias, and JWT login role.
+Workload-layer module that onboards one Kubernetes or OpenShift ServiceAccount as a Vault identity entity, alias, and JWT login role.
 
 ## Layer
 
-Principal. This module creates identity and login, but no secret policy grants.
+Workload. This module creates identity and login, but no secret policy grants.
 
 ## Prerequisites
 
-- Trust module already provisioned (`jwt_auth_path`, `jwt_mount_accessor`)
+- Trust module already provisioned (cluster-onboarding)
 - ServiceAccount namespace and name known
 
 ## Inputs
@@ -16,59 +16,53 @@ Principal. This module creates identity and login, but no secret policy grants.
 | Name | Type | Description |
 |---|---|---|
 | `cluster_name` | `string` | Cluster identifier, regex validated |
-| `principal_name` | `string` | Principal identifier, regex validated |
-| `jwt_auth_path` | `string` | Trust mount path |
-| `jwt_mount_accessor` | `string` | Trust mount accessor |
-| `ocp_namespace` | `string` | ServiceAccount namespace |
-| `service_account_name` | `string` | ServiceAccount name |
-| `bound_audiences` | `list(string)` | JWT role bound audiences, default `["vault"]` |
-| `token_ttl` | `number` | JWT role TTL in seconds, default `3600` |
-| `token_max_ttl` | `number` | JWT role max TTL in seconds, default `86400` |
+| `workload_name` | `string` | Workload identifier, regex validated |
+| `ocp_namespace` | `string` | ServiceAccount namespace, validated (lowercase alphanumeric and hyphens, 2-63 chars) |
+| `service_account_name` | `string` | ServiceAccount name, validated (lowercase alphanumeric and hyphens, 2-63 chars) |
+| `bound_audience` | `string` | JWT role bound audience, default `"vault"` |
+| `token_ttl` | `number` | JWT role TTL in seconds, default `3600`, validated 1-86400 |
+| `token_max_ttl` | `number` | JWT role max TTL in seconds, default `86400`, validated 1-86400 |
 
 ## Outputs
 
 | Name | Description |
 |---|---|
-| `entity_id` | Entity ID for downstream use-case modules |
 | `auth_role_name` | JWT role name used by workload login |
 | `cluster_name` | Echo |
-| `principal_name` | Echo |
+| `entity_id` | Entity ID for downstream use-case modules |
+| `workload_name` | Echo |
 
 ## No-code notes
 
-- `token_policies` on the principal login role is intentionally empty.
+- `token_policies` on the workload login role is intentionally empty.
 - Policy grants are attached later through use-case identity groups.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.0.2`). Open the module, click **Provision workspace**, choose a project and workspace name, then complete the form. Trust outputs from `cluster-onboarding` feed `jwt_auth_path` and `jwt_mount_accessor`.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.3.0`). Open the module, click **Provision workspace**, choose a project and workspace name, then complete the form.
 
 Form fields:
 
 | Field | Required | Notes |
 |---|---|---|
 | `cluster_name` | yes | Cluster identifier |
-| `principal_name` | yes | Principal identifier |
-| `jwt_auth_path` | yes | From trust module |
-| `jwt_mount_accessor` | yes | From trust module |
+| `workload_name` | yes | Workload identifier |
 | `ocp_namespace` | yes | ServiceAccount namespace |
 | `service_account_name` | yes | ServiceAccount name |
-| `bound_audiences` | no | Default `["vault"]` |
+| `bound_audience` | no | Default `"vault"` |
 
 ## Registry usage
 
 ```hcl
 module "add_k8s_namespace" {
   source  = "app.terraform.io/<org>/add-k8s-namespace-access/vault"
-  version = "~> 0.0.2"
+  version = "~> 0.3.0"
 
   cluster_name         = "ocp-prod-eu"
-  principal_name       = "payments"
-  jwt_auth_path        = "jwt/ocp-prod-eu"
-  jwt_mount_accessor   = "auth_jwt_12345678"
+  workload_name        = "payments"
   ocp_namespace        = "payments-ns"
   service_account_name = "payments-sa"
-  bound_audiences      = ["vault"]
+  bound_audience       = "vault"
 }
 ```
 
@@ -104,20 +98,19 @@ No modules.
 | [vault_identity_entity.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/identity_entity) | resource |
 | [vault_identity_entity_alias.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/identity_entity_alias) | resource |
 | [vault_jwt_auth_backend_role.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/jwt_auth_backend_role) | resource |
+| [vault_auth_backend.jwt](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/data-sources/auth_backend) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_bound_audiences"></a> [bound\_audiences](#input\_bound\_audiences) | Bound audiences for the principal JWT login role. | `list(string)` | <pre>[<br/>  "vault"<br/>]</pre> | no |
+| <a name="input_bound_audience"></a> [bound\_audience](#input\_bound\_audience) | JWT audience for Vault authentication. | `string` | `"vault"` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster identifier from trust module outputs. | `string` | n/a | yes |
-| <a name="input_jwt_auth_path"></a> [jwt\_auth\_path](#input\_jwt\_auth\_path) | JWT auth backend path from trust module output. | `string` | n/a | yes |
-| <a name="input_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#input\_jwt\_mount\_accessor) | JWT mount accessor from trust module output. | `string` | n/a | yes |
-| <a name="input_ocp_namespace"></a> [ocp\_namespace](#input\_ocp\_namespace) | OpenShift or Kubernetes namespace containing the ServiceAccount. | `string` | n/a | yes |
-| <a name="input_principal_name"></a> [principal\_name](#input\_principal\_name) | Short principal identifier used in entity and role naming. | `string` | n/a | yes |
-| <a name="input_service_account_name"></a> [service\_account\_name](#input\_service\_account\_name) | ServiceAccount name within ocp\_namespace. | `string` | n/a | yes |
+| <a name="input_ocp_namespace"></a> [ocp\_namespace](#input\_ocp\_namespace) | OpenShift namespace (project) name. | `string` | n/a | yes |
+| <a name="input_service_account_name"></a> [service\_account\_name](#input\_service\_account\_name) | Kubernetes ServiceAccount name used for Vault authentication. | `string` | n/a | yes |
 | <a name="input_token_max_ttl"></a> [token\_max\_ttl](#input\_token\_max\_ttl) | JWT login role token max TTL in seconds. | `number` | `86400` | no |
 | <a name="input_token_ttl"></a> [token\_ttl](#input\_token\_ttl) | JWT login role token TTL in seconds. | `number` | `3600` | no |
+| <a name="input_workload_name"></a> [workload\_name](#input\_workload\_name) | Short workload identifier used in entity and role naming. | `string` | n/a | yes |
 
 ## Outputs
 
@@ -126,4 +119,4 @@ No modules.
 | <a name="output_auth_role_name"></a> [auth\_role\_name](#output\_auth\_role\_name) | JWT login role name used by the workload for login. |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Echo of cluster\_name input. |
 | <a name="output_entity_id"></a> [entity\_id](#output\_entity\_id) | Vault identity entity ID to be passed to use-case modules. |
-| <a name="output_principal_name"></a> [principal\_name](#output\_principal\_name) | Echo of principal\_name input. |
+| <a name="output_workload_name"></a> [workload\_name](#output\_workload\_name) | Echo of workload\_name input. |

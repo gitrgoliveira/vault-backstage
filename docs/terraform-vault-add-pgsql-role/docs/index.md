@@ -1,6 +1,6 @@
 # terraform-vault-add-pgsql-role
 
-Use-case module that creates a PostgreSQL static role, static-creds read policy, and identity group binding for one principal entity.
+Use-case module that creates a PostgreSQL static role, static-creds read policy, and identity group binding for one workload entity.
 
 ## Layer
 
@@ -8,8 +8,7 @@ Use-case.
 
 ## Prerequisites
 
-- Principal module output `entity_id` and `auth_role_name`
-- Trust module output `jwt_auth_path`
+- Workload module must be applied first (entity is looked up by name `<cluster_name>-<workload_name>`)
 - Connection module outputs `db_mount_path` and `db_connection_name`
 
 ## Inputs
@@ -17,19 +16,12 @@ Use-case.
 | Name | Type | Description |
 |---|---|---|
 | `cluster_name` | `string` | Cluster identifier, regex validated |
-| `principal_name` | `string` | Principal identifier, regex validated |
-| `usecase_name` | `string` | Use-case identifier, regex validated |
-| `entity_id` | `string` | Principal entity ID |
-| `auth_role_name` | `string` | Principal login role name |
-| `jwt_auth_path` | `string` | Trust JWT auth path |
-| `db_mount_path` | `string` | Database backend mount path |
 | `db_connection_name` | `string` | Database backend connection name |
+| `db_mount_path` | `string` | Database backend mount path |
 | `db_username` | `string` | Existing PostgreSQL username |
 | `rotation_period` | `number` | Static role rotation period, default `86400` |
-| `k8s_namespace` | `string` | YAML render namespace |
-| `k8s_service_account` | `string` | Workload ServiceAccount for the rendered VaultAuth CR, default `default` |
-| `vault_namespace` | `string` | Render-only |
-| `vault_address` | `string` | Render-only |
+| `usecase_name` | `string` | Use-case identifier, regex validated |
+| `workload_name` | `string` | Workload identifier, regex validated |
 
 ## Outputs
 
@@ -43,43 +35,39 @@ Use-case.
 
 ## No-code notes
 
-- One module run grants one principal one database static-creds use-case.
-- Authorization is delivered through identity group membership (`member_entity_ids = [entity_id]`).
+- One module run grants one workload one database static-creds use-case.
+- Authorization is delivered through identity group membership (entity looked up by name).
+- `auth_role_name` and `jwt_auth_path` are derived from `cluster_name` and `workload_name`.
+- Template placeholders `<VAULT_ADDRESS>`, `<VAULT_NAMESPACE>`, `<K8S_NAMESPACE>`, and `<K8S_SERVICE_ACCOUNT>` must be replaced with environment-specific values after rendering.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.0.2`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Connection outputs come from `pgsql-onboarding`; `entity_id` and `auth_role_name` from the principal module.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.4.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Connection outputs come from `pgsql-onboarding`; the workload module must be applied first so the entity can be discovered.
 
 Form fields:
 
 | Field | Required | Notes |
 |---|---|---|
 | `cluster_name` | yes | Cluster identifier |
-| `principal_name` | yes | Principal identifier |
-| `usecase_name` | yes | Use-case identifier |
-| `entity_id` | yes | Principal entity ID |
-| `auth_role_name` | yes | Principal login role |
-| `jwt_auth_path` | yes | From trust module |
-| `db_mount_path` / `db_connection_name` | yes | From connection module |
+| `db_connection_name` | yes | From connection module |
+| `db_mount_path` | yes | From connection module |
 | `db_username` | yes | Existing PostgreSQL user |
+| `usecase_name` | yes | Use-case identifier |
+| `workload_name` | yes | Workload identifier |
 
 ## Registry usage
 
 ```hcl
 module "add_pgsql_role" {
   source  = "app.terraform.io/<org>/add-pgsql-role/vault"
-  version = "~> 0.0.2"
+  version = "~> 0.4.0"
 
   cluster_name       = "ocp-prod-eu"
-  principal_name     = "payments"
+  workload_name      = "payments"
   usecase_name       = "orders-db"
-  entity_id          = "11111111-2222-3333-4444-555555555555"
-  auth_role_name     = "ocp-prod-eu-payments"
-  jwt_auth_path      = "jwt/ocp-prod-eu"
   db_mount_path      = "db/ocp-prod-eu/payments-db"
   db_connection_name = "payments-db"
   db_username        = "payments_app"
-  k8s_namespace      = "payments-ns"
 }
 ```
 
@@ -90,9 +78,9 @@ module "add_pgsql_role" {
 ```yaml
 vault.hashicorp.com/agent-inject: "true"
 vault.hashicorp.com/role: "ocp-prod-eu-payments"
-vault.hashicorp.com/auth-path: "jwt/ocp-prod-eu"
-vault.hashicorp.com/service: "https://vault.example.com"
-vault.hashicorp.com/namespace: "admin/prod/payments"
+vault.hashicorp.com/auth-path: "auth/jwt/ocp-prod-eu"
+vault.hashicorp.com/service: "<VAULT_ADDRESS>"
+vault.hashicorp.com/namespace: "<VAULT_NAMESPACE>"
 vault.hashicorp.com/agent-inject-secret-db.json: "db/ocp-prod-eu/payments-db/static-creds/ocp-prod-eu-payments-orders-db-pg"
 ```
 
@@ -103,7 +91,7 @@ apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultDynamicSecret
 metadata:
   name: payments-orders-db
-  namespace: payments-ns
+  namespace: <K8S_NAMESPACE>
 spec:
   vaultAuthRef: ocp-prod-eu-payments
   mount: db/ocp-prod-eu/payments-db
@@ -144,25 +132,19 @@ No modules.
 | [vault_database_secret_backend_static_role.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/database_secret_backend_static_role) | resource |
 | [vault_identity_group.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/identity_group) | resource |
 | [vault_policy.this](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/resources/policy) | resource |
+| [vault_identity_entity.workload](https://registry.terraform.io/providers/hashicorp/vault/latest/docs/data-sources/identity_entity) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_auth_role_name"></a> [auth\_role\_name](#input\_auth\_role\_name) | JWT auth role name used by workloads for login. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster identifier used in role, policy, and group naming. | `string` | n/a | yes |
 | <a name="input_db_connection_name"></a> [db\_connection\_name](#input\_db\_connection\_name) | Database backend connection name from onboard-pgsql-connection output. | `string` | n/a | yes |
 | <a name="input_db_mount_path"></a> [db\_mount\_path](#input\_db\_mount\_path) | Database backend mount path from onboard-pgsql-connection output. | `string` | n/a | yes |
 | <a name="input_db_username"></a> [db\_username](#input\_db\_username) | Existing PostgreSQL username managed by Vault static role. | `string` | n/a | yes |
-| <a name="input_entity_id"></a> [entity\_id](#input\_entity\_id) | Vault entity ID that receives this database policy via identity group membership. | `string` | n/a | yes |
-| <a name="input_jwt_auth_path"></a> [jwt\_auth\_path](#input\_jwt\_auth\_path) | JWT auth path used for rendered workload integration snippets. | `string` | n/a | yes |
-| <a name="input_k8s_namespace"></a> [k8s\_namespace](#input\_k8s\_namespace) | Kubernetes namespace used in rendered YAML snippets. | `string` | `""` | no |
-| <a name="input_k8s_service_account"></a> [k8s\_service\_account](#input\_k8s\_service\_account) | Workload Kubernetes ServiceAccount referenced by the rendered VaultAuth CR; VSO mints its projected JWT for Vault login. | `string` | `"default"` | no |
-| <a name="input_principal_name"></a> [principal\_name](#input\_principal\_name) | Principal identifier used in role, policy, and group naming. | `string` | n/a | yes |
 | <a name="input_rotation_period"></a> [rotation\_period](#input\_rotation\_period) | Static role password rotation period in seconds. | `number` | `86400` | no |
 | <a name="input_usecase_name"></a> [usecase\_name](#input\_usecase\_name) | Use-case identifier used in role, policy, and group naming. | `string` | n/a | yes |
-| <a name="input_vault_address"></a> [vault\_address](#input\_vault\_address) | Render-only Vault address value supplied via TF\_VAR\_vault\_address. | `string` | `""` | no |
-| <a name="input_vault_namespace"></a> [vault\_namespace](#input\_vault\_namespace) | Render-only Vault namespace value supplied via TF\_VAR\_vault\_namespace. | `string` | `""` | no |
+| <a name="input_workload_name"></a> [workload\_name](#input\_workload\_name) | Workload identifier used in role, policy, and group naming. | `string` | n/a | yes |
 
 ## Outputs
 
@@ -172,4 +154,4 @@ No modules.
 | <a name="output_group_name"></a> [group\_name](#output\_group\_name) | Identity group name granting database static credential read policy. |
 | <a name="output_injector_yaml"></a> [injector\_yaml](#output\_injector\_yaml) | Rendered Vault Agent Injector annotations snippet for static-creds path. |
 | <a name="output_policy_name"></a> [policy\_name](#output\_policy\_name) | Database static credential read policy name. |
-| <a name="output_vso_yaml"></a> [vso\_yaml](#output\_vso\_yaml) | Rendered Vault Secrets Operator VaultDynamicSecret snippet for static-creds path. |
+| <a name="output_vso_yaml"></a> [vso\_yaml](#output\_vso\_yaml) | Rendered Vault Secrets Operator VaultAuth and VaultDynamicSecret snippet for static-creds path. |

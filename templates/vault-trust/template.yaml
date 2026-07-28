@@ -53,7 +53,7 @@ spec:
                   type: string
                   description: >-
                     A short, unique name for the cluster you are establishing
-                    trust for. Principal and use-case templates reference this
+                    trust for. Workload and use-case templates reference this
                     exact name. Example: ocp-prod-eu.
                   pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
                 jwtIssuer:
@@ -72,7 +72,7 @@ spec:
                   title: GitLab Instance
                   type: string
                   description: Which GitLab instance to establish trust with.
-                  enum: [cloud, dedicated_prod, dedicated_dev]
+                  enum: [cloud, dedicated-prod, dedicated-dev]
                 oidcDiscoveryUrl:
                   title: OIDC Discovery URL
                   type: string

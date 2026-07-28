@@ -36,50 +36,50 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-k8s-namespace-access
-  description: Onboards a Kubernetes namespace/service account as a Vault principal.
-  tags: [terraform, vault, principal, kubernetes]
+  description: Onboards a Kubernetes namespace/service account as a Vault workload identity.
+  tags: [terraform, vault, workload, kubernetes]
   annotations:
     backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-k8s-namespace-access
     hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
-    hcptf.io/layer: principal
-    hcptf.io/outputs: entity_id,auth_role_name
+    hcptf.io/layer: workload
+    hcptf.io/outputs: entity_id,auth_role_name,workload_name
     hcptf.io/depends-on-layer: trust
 spec:
   type: terraform-module
   lifecycle: production
   owner: group:default/vault-platform
-  system: vault-principal
+  system: vault-workload
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-gitlab-project-access
-  description: Onboards a GitLab project as a Vault principal.
-  tags: [terraform, vault, principal, gitlab]
+  description: Onboards a GitLab project as a Vault workload identity.
+  tags: [terraform, vault, workload, gitlab]
   annotations:
     backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-gitlab-project-access
     hcptf.io/module-name: terraform-vault-add-gitlab-project-access
-    hcptf.io/layer: principal
-    hcptf.io/outputs: entity_id,auth_role_name
+    hcptf.io/layer: workload
+    hcptf.io/outputs: entity_id,auth_role_name,workload_name
     hcptf.io/depends-on-layer: trust
 spec:
   type: terraform-module
   lifecycle: production
   owner: group:default/vault-platform
-  system: vault-principal
+  system: vault-workload
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-kvv2
-  description: Provisions KVv2 access and identity group bindings for a principal.
+  description: Provisions KVv2 access and identity group bindings for a workload.
   tags: [terraform, vault, kv, usecase]
   annotations:
     backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-kvv2
     hcptf.io/module-name: terraform-vault-add-kvv2
     hcptf.io/layer: usecase
     hcptf.io/outputs: kv_mount_path,group_name,consumption_examples
-    hcptf.io/depends-on-layer: principal
+    hcptf.io/depends-on-layer: workload
 spec:
   type: terraform-module
   lifecycle: production
@@ -97,7 +97,7 @@ metadata:
     hcptf.io/module-name: terraform-vault-add-pgsql-role
     hcptf.io/layer: usecase
     hcptf.io/outputs: db_role_name,policy_name,injector_yaml,vso_yaml
-    hcptf.io/depends-on-layer: principal
+    hcptf.io/depends-on-layer: workload
 spec:
   type: terraform-module
   lifecycle: production
@@ -108,14 +108,14 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-permission-group
-  description: Grants custom ACL capabilities over Vault paths to principals.
+  description: Grants custom ACL capabilities over Vault paths to workloads.
   tags: [terraform, vault, acl, usecase]
   annotations:
     backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-permission-group
     hcptf.io/module-name: terraform-vault-add-permission-group
     hcptf.io/layer: usecase
     hcptf.io/outputs: policy_name,group_name
-    hcptf.io/depends-on-layer: principal
+    hcptf.io/depends-on-layer: workload
 spec:
   type: terraform-module
   lifecycle: production
@@ -172,31 +172,31 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-k8s-namespace-access
-  description: Onboards a Kubernetes namespace/service account as a Vault principal.
-  tags: [terraform, vault, principal, kubernetes]
+  description: Onboards a Kubernetes namespace/service account as a Vault workload identity.
+  tags: [terraform, vault, workload, kubernetes]
 spec:
   type: terraform-module
   lifecycle: production
   owner: group:default/vault-platform
-  system: vault-principal
+  system: vault-workload
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-gitlab-project-access
-  description: Onboards a GitLab project as a Vault principal.
-  tags: [terraform, vault, principal, gitlab]
+  description: Onboards a GitLab project as a Vault workload identity.
+  tags: [terraform, vault, workload, gitlab]
 spec:
   type: terraform-module
   lifecycle: production
   owner: group:default/vault-platform
-  system: vault-principal
+  system: vault-workload
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-kvv2
-  description: Provisions KVv2 access and identity group bindings for a principal.
+  description: Provisions KVv2 access and identity group bindings for a workload.
   tags: [terraform, vault, kv, usecase]
 spec:
   type: terraform-module
@@ -220,7 +220,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: terraform-vault-add-permission-group
-  description: Grants custom ACL capabilities over Vault paths to principals.
+  description: Grants custom ACL capabilities over Vault paths to workloads.
   tags: [terraform, vault, acl, usecase]
 spec:
   type: terraform-module

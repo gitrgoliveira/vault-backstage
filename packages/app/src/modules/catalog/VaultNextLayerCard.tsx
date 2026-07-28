@@ -4,23 +4,17 @@ import { InfoCard } from '@backstage/core-components';
 import { Button, Typography } from '@material-ui/core';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
-type NextStep = { template: string; parentField: string; label: string };
+type NextStep = { template: string; label: string };
 
-// Maps a workspace layer to the template that provisions the next layer, plus
-// the EntityPicker field on that template that should be pre-selected with the
-// current workspace as the parent.
 const NEXT_BY_LAYER: Record<string, NextStep | undefined> = {
   trust: {
-    template: 'vault-l2-principal',
-    parentField: 'parentTrustWorkspace',
-    label: 'Create Principal (Layer 2)',
+    template: 'vault-l2-workload',
+    label: 'Create Workload (Layer 2)',
   },
-  principal: {
+  workload: {
     template: 'vault-l3-usecase',
-    parentField: 'parentPrincipalWorkspace',
     label: 'Create Use-case (Layer 3)',
   },
-  usecase: undefined,
 };
 
 /**
@@ -40,43 +34,27 @@ export function VaultNextLayerCard() {
     const moduleName = ann['hcptf.io/module-name'] ?? '';
     const targetName = ann['hcptf.io/target'];
     const self = `resource:default/${entity.metadata.name}`;
-    // A principal's/trust's parent link is recorded as spec.dependsOn, so the
-    // next layer can pre-select the grandparent (e.g. the trust behind a
-    // principal) as well as this workspace.
-    const parentRef = (entity.spec?.dependsOn as string[] | undefined)?.[0];
     const formData: Record<string, string> = {};
     if (targetName) {
       formData.onboardedTarget = `resource:default/${targetName}`;
     }
 
     if (layer === 'trust') {
-      // From a trust, preselect the matching principal type and this trust as
-      // the parent trust field for that type.
       if (moduleName.includes('gitlab-onboarding')) {
-        formData.principalType = 'gitlab';
+        formData.workloadType = 'gitlab';
         formData.parentGitlabTrust = self;
       } else {
-        formData.principalType = 'k8s';
+        formData.workloadType = 'k8s';
         formData.parentTrustWorkspace = self;
       }
-    } else if (layer === 'principal') {
-      // From a principal, preselect the KV use-case matching its type, this
-      // principal as the parent, and its trust (dependsOn) as the parent trust.
+    } else if (layer === 'workload') {
       if (moduleName.includes('gitlab-project-access')) {
         formData.useCaseType = 'kvv2-gitlab';
-        formData.parentGitlabPrincipal = self;
-        if (parentRef) {
-          formData.parentGitlabTrust = parentRef;
-        }
+        formData.parentGitlabWorkload = self;
       } else {
         formData.useCaseType = 'kvv2';
-        formData.parentPrincipalWorkspace = self;
-        if (parentRef) {
-          formData.parentTrustWorkspace = parentRef;
-        }
+        formData.parentWorkloadWorkspace = self;
       }
-    } else {
-      formData[next.parentField] = self;
     }
 
     href = `/create/templates/default/${next.template}?formData=${encodeURIComponent(
