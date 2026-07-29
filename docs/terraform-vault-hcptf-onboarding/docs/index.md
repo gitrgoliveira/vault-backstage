@@ -29,7 +29,7 @@ Those are *environment* variables, and Terraform configuration cannot read envir
 
 The module copies that address into `TFC_VAULT_ADDR` on each `<tenant>-Vault-<env>` variable set it creates, so the tenant's future workspaces authenticate to the same Vault. Neither value is a hand-entered module argument.
 
-> **Warning — placeholder tenant policy:** The policy this module attaches to every tenant JWT role is a placeholder with near-namespace-admin access (`path "*"` with full CRUD, and `sys/auth/*` with sudo). The namespace boundary and `bound_claims` below control who can *authenticate*; they do not limit what an authenticated token can *do* inside the tenant namespace. Replace the policy with least-privilege paths before production use.
+> **Tenant policy scope:** The policy this module attaches to every tenant JWT role is scoped to the paths the onboarding modules manage: secret-mount lifecycle (`sys/mounts/*`), JWT trust mounts (`sys/auth/*` — with the sudo that enabling auth methods requires — plus the `auth/jwt/*` and `auth/jwt-gitlab/*` data planes), ACL policies, identity objects, and the `db/*` database-engine configuration. Onboarding workspaces cannot read workload KV data. If you add modules that touch other paths, extend the policy deliberately rather than widening it to `path "*"`.
 
 ## Isolation
 
