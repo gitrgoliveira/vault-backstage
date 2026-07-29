@@ -49,7 +49,7 @@ This module no longer takes the trust mount path or accessor as inputs. Both are
 
 This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.3.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `gitlab_instance_name` is presented as a **dropdown** limited to `cloud`, `dedicated-prod`, `dedicated-dev`. The trust mount path and accessor are derived from `gitlab_instance_name`, so they are no longer form fields.
 
-> **No-code UX note:** The `gitlab_instance_name` dropdown is driven by explicit no-code `variable-options` configured on the module in the registry, not by the module's `contains()` validation (which only validates on submit). These options (`cloud`, `dedicated-prod`, `dedicated-dev`) are a registry-side setting applied via the `tfe_no_code_module` resource or the no-code modules API. They are not stored in this repository, so re-enabling no-code provisioning for the module requires re-applying them.
+> **No-code UX note:** The `gitlab_instance_name` dropdown is driven by explicit no-code `variable-options` configured on the module in the registry, not by the module's `contains()` validation (which only validates on submit). These options (`cloud`, `dedicated-prod`, `dedicated-dev`) are a registry-side setting applied using the `tfe_no_code_module` resource or the no-code modules API. They are not stored in this repository, so re-enabling no-code provisioning for the module requires re-applying them.
 
 Form fields:
 

@@ -1,13 +1,13 @@
-# Getting Started
+# Getting started
 
 ## Prerequisites
 
 Before using the portal, ensure you have:
 
-- Access to the Backstage instance (authenticated via GitLab SSO or guest mode for local dev)
+- Access to the Backstage instance (authenticated through GitLab SSO or guest mode for local dev)
 - An HCP Terraform organization with no-code modules published to the private registry
-- For **admin onboarding**: HCP TF admin project with Vault credentials variable set
-- For **trust/workload/use-case**: A tenant already onboarded via the admin template
+- For **admin onboarding**: HCP Terraform admin project with Vault credentials variable set
+- For **trust/workload/use-case**: A tenant already onboarded using the admin template
 
 ## Local development
 
@@ -55,10 +55,10 @@ This validates your token and resolves no-code module IDs.
 
 A typical onboarding sequence follows the [4-layer model](architecture.md):
 
-1. **Admin** creates a tenant via [L0 — Tenant Onboarding](cards/admin-onboarding.md)
-2. **Admin** establishes trust via [L1 — Trust Onboarding](cards/trust-onboarding.md)
-3. **App team** registers their workload via [L2 — Workload Onboarding](cards/workload-onboarding.md)
-4. **App team** requests secret access via [L3 — Use-case Onboarding](cards/usecase-onboarding.md)
+1. **Admin** creates a tenant using [L0: Tenant onboarding](cards/admin-onboarding.md)
+2. **Admin** establishes trust using [L1: Trust onboarding](cards/trust-onboarding.md)
+3. **App team** registers their workload using [L2: Workload onboarding](cards/workload-onboarding.md)
+4. **App team** requests secret access using [L3: Use-case onboarding](cards/usecase-onboarding.md)
 
 Each step produces an HCP Terraform workspace and a Backstage catalog entity. Later steps reference earlier ones through the entity picker fields in the form.
 

@@ -1,6 +1,6 @@
 # terraform-vault-add-permission-group
 
-Use-case module that creates a custom ACL policy for any Vault path and grants it to one workload entity via identity group membership.
+Use-case module that creates a custom ACL policy for any Vault path and grants it to one workload entity through identity group membership.
 
 ## Layer
 

@@ -40,7 +40,7 @@ Environment-specific values (`VAULT_ADDRESS`, `VAULT_NAMESPACE`) and Kubernetes 
 ## No-code notes
 
 - One module run grants one workload one KV-v2 use-case.
-- Authorization is delivered through identity group membership; the entity is discovered automatically via `data "vault_identity_entity"` using the name `"${cluster_name}-${workload_name}"`.
+- Authorization is delivered through identity group membership; the entity is discovered automatically through `data "vault_identity_entity"` using the name `"${cluster_name}-${workload_name}"`.
 
 ## No-code provisioning
 

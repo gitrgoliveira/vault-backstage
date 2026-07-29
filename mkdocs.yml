@@ -2,6 +2,9 @@ site_name: Vault Self-Service Portal
 site_description: Documentation for the Vault Self-Service IDP built on Backstage and HCP Terraform
 docs_dir: pages
 site_dir: _site
+site_url: https://gitrgoliveira.github.io/vault-backstage/
+repo_url: https://github.com/gitrgoliveira/vault-backstage
+repo_name: gitrgoliveira/vault-backstage
 
 theme:
   name: material
@@ -50,21 +53,22 @@ nav:
   - Getting Started: getting-started.md
   - Template Cards:
       - Overview: cards/index.md
-      - "L0 — Tenant Onboarding (Admin)": cards/admin-onboarding.md
-      - "L1 — Trust Onboarding": cards/trust-onboarding.md
-      - "L2 — Workload Onboarding": cards/workload-onboarding.md
-      - "L3 — Use-case Onboarding": cards/usecase-onboarding.md
+      - "L0: Tenant onboarding": cards/admin-onboarding.md
+      - "L1: Trust onboarding": cards/trust-onboarding.md
+      - "L2: Workload onboarding": cards/workload-onboarding.md
+      - "L3: Use-case onboarding": cards/usecase-onboarding.md
   - Terraform Modules:
       - Overview: modules/index.md
+      - Admin Layer:
+          - HCP Terraform onboarding: modules/hcptf-onboarding.md
       - Trust Layer:
-          - Cluster Onboarding: modules/cluster-onboarding.md
-          - GitLab Onboarding: modules/gitlab-onboarding.md
-          - HCP TF Onboarding: modules/hcptf-onboarding.md
+          - Cluster onboarding: modules/cluster-onboarding.md
+          - GitLab onboarding: modules/gitlab-onboarding.md
       - Workload Layer:
-          - K8s Namespace Access: modules/add-k8s-namespace-access.md
-          - GitLab Project Access: modules/add-gitlab-project-access.md
+          - Kubernetes namespace access: modules/add-k8s-namespace-access.md
+          - GitLab project access: modules/add-gitlab-project-access.md
       - Use-case Layer:
-          - KV v2 Access: modules/add-kvv2.md
-          - PostgreSQL Role: modules/add-pgsql-role.md
-          - Permission Group: modules/add-permission-group.md
-          - PostgreSQL Connection: modules/pgsql-onboarding.md
+          - KV v2 access: modules/add-kvv2.md
+          - PostgreSQL role: modules/add-pgsql-role.md
+          - Permission group: modules/add-permission-group.md
+          - PostgreSQL connection: modules/pgsql-onboarding.md

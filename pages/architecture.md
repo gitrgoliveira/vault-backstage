@@ -17,16 +17,16 @@ The Vault Self-Service Portal uses a layered onboarding model. Each layer builds
 │  Mounts JWT auth backends for OIDC trust             │
 ├──────────────────────────────────────────────────────┤
 │  L0 — Admin / Tenant                                 │
-│  HCP TF onboarding                                   │
+│  HCP Terraform onboarding                            │
 │  Creates projects, namespaces, and variable sets     │
 └──────────────────────────────────────────────────────┘
 ```
 
 ## Layer dependencies
 
-Layers must be provisioned in order. Each layer's Terraform module reads outputs from the layer below via HCP Terraform workspace data sharing.
+Layers must be provisioned in order. Each layer's Terraform module reads outputs from the layer below through HCP Terraform workspace data sharing.
 
-- **L0 → L1**: Trust workspaces are placed inside the tenant's HCP TF project, inheriting the Vault credentials variable set.
+- **L0 → L1**: Trust workspaces are placed inside the tenant's HCP Terraform project, inheriting the Vault credentials variable set.
 - **L1 → L2**: Workload modules reference the `jwt_auth_path` and `jwt_mount_accessor` outputs from the trust workspace.
 - **L2 → L3**: Use-case modules look up the workload entity by name to bind an identity group.
 
@@ -40,7 +40,7 @@ The portal maps these layers to Backstage catalog entities:
 | `System` | `vault-trust`, `vault-workload`, `vault-usecase` | One per layer (L1–L3) |
 | `Component` | `terraform-module` | Each Terraform module |
 | `Resource` | `vault-target` | Per-tenant/environment target created by L0 |
-| `Resource` | `vault-workspace` | Each HCP TF workspace created by templates |
+| `Resource` | `vault-workspace` | Each HCP Terraform workspace created by templates |
 | `Template` | `infrastructure` | The 4 scaffolder templates |
 
 ## Data flow
@@ -68,5 +68,5 @@ Backstage catalog updated with new Resource entity
 | **Backstage** | UI, catalog, scaffolder templates |
 | **HCP Terraform** | Workspace management, no-code module execution, state |
 | **HashiCorp Vault** | Secret management, auth backends, policies |
-| **Kubernetes** | OIDC trust via ServiceAccount tokens |
-| **GitLab** | OIDC trust via CI/CD ID tokens |
+| **Kubernetes** | OIDC trust through ServiceAccount tokens |
+| **GitLab** | OIDC trust through CI/CD ID tokens |

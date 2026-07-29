@@ -1,8 +1,8 @@
-# L3 — Vault Use-case Onboarding
+# L3: Vault use-case onboarding
 
 ## What it does
 
-Grants an onboarded workload access to a specific type of Vault secret. This is the final layer — it creates the policy, identity group binding, and (where applicable) the secret engine mount.
+Grants an onboarded workload access to a specific type of Vault secret. This is the final layer. It creates the policy, identity group binding, and (where applicable) the secret engine mount.
 
 Five use-case types are supported:
 
@@ -21,23 +21,23 @@ Five use-case types are supported:
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Tenant / Environment** | Yes | Entity Picker | Select the tenant target created by L0. |
-| **Workspace Name** | Yes | `string` | Unique HCP TF workspace name, e.g. `sdi-dev-payments-kv`. |
+| **Workspace Name** | Yes | `string` | Unique HCP Terraform workspace name, such as `sdi-dev-payments-kv`. |
 | **Use-case Type** | Yes | `enum` | Selects which use-case to provision (see table above). |
 
 ### KV v2 (Kubernetes workload)
 
-![Use-case form — KVv2 Kubernetes](../img/usecase-onboarding-kvv2.png)
+![Use-case form for KVv2 Kubernetes](../img/usecase-onboarding-kvv2.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| **Use-case Name** | Yes | `string` | Identifier for this use-case, e.g. `app-config`. |
+| **Use-case Name** | Yes | `string` | Identifier for this use-case, such as `app-config`. |
 | **Cluster / Scope Name** | Yes | `string` | Must match the cluster name from L1. |
 | **Workload Name** | Yes | `string` | Must match the workload name from L2. |
 | **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 Kubernetes workload workspace. |
 
 ### KV v2 (GitLab workload)
 
-![Use-case form — KVv2 GitLab](../img/usecase-onboarding-kvv2-gitlab.png)
+![Use-case form for KVv2 GitLab](../img/usecase-onboarding-kvv2-gitlab.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
@@ -47,7 +47,7 @@ Five use-case types are supported:
 
 ### PostgreSQL static role
 
-![Use-case form — PostgreSQL role](../img/usecase-onboarding-pgsql-role.png)
+![Use-case form for PostgreSQL role](../img/usecase-onboarding-pgsql-role.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
@@ -60,7 +60,7 @@ Five use-case types are supported:
 
 ### Custom ACL permission group
 
-![Use-case form — Permission group](../img/usecase-onboarding-permission-group.png)
+![Use-case form for permission group](../img/usecase-onboarding-permission-group.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
@@ -79,7 +79,7 @@ Five use-case types are supported:
 
 ### PostgreSQL connection (DBA root config)
 
-![Use-case form — PostgreSQL connection](../img/usecase-onboarding-pgsql-connection.png)
+![Use-case form for PostgreSQL connection](../img/usecase-onboarding-pgsql-connection.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|

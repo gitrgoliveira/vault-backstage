@@ -1,4 +1,4 @@
-# L1 — Vault Trust Onboarding
+# L1: Vault trust onboarding
 
 ## What it does
 
@@ -6,8 +6,8 @@ Establishes OIDC trust between Vault and an external identity provider by mounti
 
 Two trust types are supported:
 
-- **Kubernetes / OpenShift cluster** — uses the cluster's ServiceAccount OIDC issuer
-- **GitLab instance** — uses GitLab CI/CD ID tokens
+- **Kubernetes / OpenShift cluster**: uses the cluster's ServiceAccount OIDC issuer
+- **GitLab instance**: uses GitLab CI/CD ID tokens
 
 ## Terraform modules
 
@@ -23,31 +23,31 @@ Two trust types are supported:
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Tenant / Environment** | Yes | Entity Picker | Select the tenant target created by L0. Filters to `vault-target` Resources. |
-| **Workspace Name** | Yes | `string` | Unique HCP TF workspace name, e.g. `sdi-dev-cluster-trust`. |
+| **Workspace Name** | Yes | `string` | Unique HCP Terraform workspace name, such as `sdi-dev-cluster-trust`. |
 | **Trust Type** | Yes | `enum` | `Kubernetes / OpenShift cluster` or `GitLab instance`. |
 
 ### Kubernetes-specific fields
 
-![Trust Onboarding form — Kubernetes cluster](../img/trust-onboarding-cluster.png)
+The following fields appear when you set Trust Type to **Kubernetes / OpenShift cluster**.
 
-Shown when Trust Type = **Kubernetes / OpenShift cluster**:
+![Trust onboarding form for Kubernetes cluster](../img/trust-onboarding-cluster.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| **Cluster Name** | Yes | `string` | Short unique cluster identifier, e.g. `ocp-prod-eu`. Downstream templates reference this name exactly. |
+| **Cluster Name** | Yes | `string` | Short unique cluster identifier, such as `ocp-prod-eu`. Downstream templates reference this name exactly. |
 | **JWT Issuer URL** | Yes | `string` | The cluster's OIDC issuer URL (`kube-apiserver --service-account-issuer`). |
 | **OIDC Discovery URL** | No | `string` | Override the OIDC discovery endpoint if it differs from the issuer. |
 
 ### GitLab-specific fields
 
-![Trust Onboarding form — GitLab instance](../img/trust-onboarding-gitlab.png)
+The following fields appear when you set Trust Type to **GitLab instance**.
 
-Shown when Trust Type = **GitLab instance**:
+![Trust onboarding form for GitLab instance](../img/trust-onboarding-gitlab.png)
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **GitLab Instance** | Yes | `enum` | `cloud`, `dedicated-prod`, or `dedicated-dev`. |
-| **OIDC Discovery URL** | Yes | `string` | The GitLab OIDC discovery URL, e.g. `https://gitlab.com` for GitLab SaaS. |
+| **OIDC Discovery URL** | Yes | `string` | The GitLab OIDC discovery URL, such as `https://gitlab.com` for GitLab SaaS. |
 
 ## Output
 
@@ -57,4 +57,4 @@ Shown when Trust Type = **GitLab instance**:
 
 ## What to do next
 
-With trust established, application teams can register their workloads via [L2 — Workload Onboarding](workload-onboarding.md).
+With trust established, application teams can register their workloads using [L2: Workload onboarding](workload-onboarding.md).

@@ -1,4 +1,4 @@
-# `terraform-vault-hcptf-onboarding/` — per-tenant environment onboarding
+# `terraform-vault-hcptf-onboarding/`: per-tenant environment onboarding
 
 A no-code ready module that onboards one tenant onto HCP Vault from HCP Terraform. One invocation onboards one tenant across all of its environments, looping over `var.environments`. For each environment it creates a `<tenant>-Vault-<env>` HCP Terraform project, a `<tenant>` child namespace under the matching environment namespace in HCP Vault, the JWT trust inside that namespace, and a variable set that wires future workspaces in the project to authenticate automatically.
 
@@ -9,7 +9,7 @@ A no-code ready module that onboards one tenant onto HCP Vault from HCP Terrafor
 | `environments` | `list(string)` | `["dev", "test", "prod"]` | Environments to onboard for the tenant |
 | `project_tags` | `map(string)` | `{ Product = "Vault" }` | Tag bindings applied to each `<tenant>-Vault-<env>` project; workspaces created in the project inherit them as effective tags |
 | `tenant` | `string` | none | Tenant name; used in project names and the tenant namespace path |
-| `vault_address` | `string` | `""` | HCP Vault address; supplied via the `TF_VAR_vault_address` env var from the project variable set |
+| `vault_address` | `string` | `""` | HCP Vault address; supplied by the `TF_VAR_vault_address` env var from the project variable set |
 | `vault_auth_path` | `string` | `"tf_jwt"` | JWT auth mount path inside each tenant namespace |
 | `vault_role_name` | `string` | `"hcp-tf"` | JWT role name created in each tenant namespace |
 
@@ -22,7 +22,7 @@ The HCP Terraform organization is derived from `TFC_WORKSPACE_SLUG`, and the Vau
 | `project_ids` | Map env to `<tenant>-Vault-<env>` project ID |
 | `project_names` | Map env to `<tenant>-Vault-<env>` project name |
 | `role_names` | Map env to JWT role name |
-| `tenant_namespace_paths` | Map env to tenant namespace `path_fq` (relative to the admin namespace, e.g. `<env>/<tenant>`) |
+| `tenant_namespace_paths` | Map env to tenant namespace `path_fq` (relative to the admin namespace, such as `<env>/<tenant>`) |
 | `variable_set_ids` | Map env to variable set ID |
 | `vault_namespaces` | Map env to the fully qualified Vault namespace from the cluster root (`admin/<env>/<tenant>`) |
 
@@ -30,7 +30,7 @@ The HCP Terraform organization is derived from `TFC_WORKSPACE_SLUG`, and the Vau
 
 This is a [no-code ready module](https://developer.hashicorp.com/terraform/cloud-docs/no-code-provisioning/module-design): it configures its own `vault` and `tfe` providers, so HCP Terraform can provision it without a hand-written caller.
 
-Grant the no-code workspaces their credentials with a **project-scoped variable set** applied to the project where the module lands. The module's `vault` provider authenticates to the `admin` namespace via Vault dynamic provider credentials, and its `tfe` provider manages org-level projects and variable sets:
+Grant the no-code workspaces their credentials with a **project-scoped variable set** applied to the project where the module lands. The module's `vault` provider authenticates to the `admin` namespace using Vault dynamic provider credentials, and its `tfe` provider manages org-level projects and variable sets:
 
 | Variable | Category | Value |
 |---|---|---|
@@ -106,7 +106,7 @@ No modules.
 | <a name="input_environments"></a> [environments](#input\_environments) | Environments to onboard for the tenant. | `list(string)` | <pre>[<br/>  "dev",<br/>  "test",<br/>  "prod"<br/>]</pre> | no |
 | <a name="input_project_tags"></a> [project\_tags](#input\_project\_tags) | Tag bindings applied to each <tenant>-Vault-<env> project. Workspaces created in the project inherit them as effective tags. | `map(string)` | <pre>{<br/>  "Product": "Vault"<br/>}</pre> | no |
 | <a name="input_tenant"></a> [tenant](#input\_tenant) | Tenant name. Used in project names and the tenant namespace path. | `string` | n/a | yes |
-| <a name="input_vault_address"></a> [vault\_address](#input\_vault\_address) | HCP Vault address, supplied via the TF\_VAR\_vault\_address environment variable from the project variable set. Written into the downstream tenant variable sets. | `string` | `""` | no |
+| <a name="input_vault_address"></a> [vault\_address](#input\_vault\_address) | HCP Vault address, supplied by the TF\_VAR\_vault\_address environment variable from the project variable set. Written into the downstream tenant variable sets. | `string` | `""` | no |
 | <a name="input_vault_auth_path"></a> [vault\_auth\_path](#input\_vault\_auth\_path) | JWT auth mount path inside each tenant namespace. | `string` | `"tf_jwt"` | no |
 | <a name="input_vault_role_name"></a> [vault\_role\_name](#input\_vault\_role\_name) | JWT role name created in each tenant namespace. | `string` | `"hcp-tf"` | no |
 

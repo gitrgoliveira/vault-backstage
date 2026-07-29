@@ -154,10 +154,6 @@ async function main() {
         await page.waitForTimeout(1000);
       }
 
-      // Capture the main content area (exclude sidebar navigation)
-      const mainContent = page.locator('main, [class*="MuiPaper-root"]').first();
-      const target = (await mainContent.count()) ? mainContent : page;
-
       // Full page screenshot to get all form fields
       await page.screenshot({
         path: join(outDir, filename),

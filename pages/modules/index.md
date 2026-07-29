@@ -1,18 +1,29 @@
-# Terraform Modules
+# Terraform modules
 
 The portal is backed by 9 no-code Terraform modules published to an HCP Terraform private registry. Each module handles one specific operation in the [4-layer onboarding model](../architecture.md).
 
 ## Module inventory
 
+### Admin layer (L0)
+
+The following module bootstraps the tenant infrastructure that all other layers depend on:
+
+| Module | Description |
+|--------|-------------|
+| [`terraform-vault-hcptf-onboarding`](hcptf-onboarding.md) | Bootstraps tenant onboarding into HCP Terraform and Vault namespaces |
+
 ### Trust layer (L1)
+
+The following modules establish OIDC trust between Vault and external identity providers:
 
 | Module | Description |
 |--------|-------------|
 | [`terraform-vault-cluster-onboarding`](cluster-onboarding.md) | Creates a Vault JWT auth backend for Kubernetes/OpenShift cluster trust |
 | [`terraform-vault-gitlab-onboarding`](gitlab-onboarding.md) | Creates a Vault JWT auth backend for GitLab instance trust |
-| [`terraform-vault-hcptf-onboarding`](hcptf-onboarding.md) | Bootstraps tenant onboarding into HCP Terraform and Vault namespaces |
 
 ### Workload layer (L2)
+
+The following modules register workload identities in Vault:
 
 | Module | Description |
 |--------|-------------|
@@ -20,6 +31,8 @@ The portal is backed by 9 no-code Terraform modules published to an HCP Terrafor
 | [`terraform-vault-add-gitlab-project-access`](add-gitlab-project-access.md) | Onboards a GitLab project as a Vault workload identity |
 
 ### Use-case layer (L3)
+
+The following modules grant workloads access to specific secret types:
 
 | Module | Description |
 |--------|-------------|
