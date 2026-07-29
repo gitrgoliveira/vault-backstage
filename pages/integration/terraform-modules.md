@@ -58,7 +58,7 @@ For each module, create a [no-code ready module](https://developer.hashicorp.com
       module_provider = "vault"
 
       vcs_repo {
-        display_identifier = var.vcs_repo   # for example "acme/self-service-vault"
+        display_identifier = var.vcs_repo   # for example "ridgeline/self-service-vault"
         identifier         = var.vcs_repo
         oauth_token_id     = var.oauth_token_id
         branch             = "main"

@@ -41,8 +41,8 @@ Successful output looks like this:
 HCP Terraform preflight for org "your-org" (https://app.terraform.io)
 ✔ Token valid. 9 Vault provider modules, 9 no-code enabled.
 
-✔ 2 Vault-tagged projects (Product=Vault): acme-Vault-dev, acme-Vault-prod
-  Onboarded tenant/env targets: acme/dev, acme/prod
+✔ 2 Vault-tagged projects (Product=Vault): ridgeline-Vault-dev, ridgeline-Vault-prod
+  Onboarded tenant/env targets: ridgeline/dev, ridgeline/prod
 
 Module resolution:
   ✔ terraform-vault-hcptf-onboarding -> terraform-vault-hcptf-onboarding (vault) -> nocode-AbC123

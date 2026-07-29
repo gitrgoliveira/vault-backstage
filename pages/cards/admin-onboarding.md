@@ -11,7 +11,7 @@ The following screenshot shows the tenant onboarding form fields in Backstage.
 
 Creates a new tenant in the Vault self-service platform by provisioning:
 
-- Per-environment HCP Terraform projects (such as `acme-Vault-dev`, `acme-Vault-test`, `acme-Vault-prod`)
+- Per-environment HCP Terraform projects (such as `ridgeline-Vault-dev`, `ridgeline-Vault-test`, `ridgeline-Vault-prod`)
 - Vault namespaces for each environment
 - Trust relationships and variable sets carrying Vault credentials
 
