@@ -323,8 +323,10 @@ export class HcpTfClient {
       // Retry on rate limiting (429) and transient server errors (>=500).
       if ((res.status === 429 || res.status >= 500) && attempt < maxRetries) {
         const retryAfter = Number(res.headers.get('retry-after'));
+        // Cap the server-supplied Retry-After: scaffolder actions await this
+        // inline, so an upstream sending a huge value must not stall them.
         const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
-          ? retryAfter * 1000
+          ? Math.min(retryAfter * 1000, 30_000)
           : Math.min(1000 * 2 ** attempt, 8000);
         this.logger.warn(
           `HCP TF API ${method} ${path} -> ${res.status}; retrying in ${delayMs}ms ` +

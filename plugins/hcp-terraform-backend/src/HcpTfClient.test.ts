@@ -109,3 +109,42 @@ describe('HcpTfClient pagination', () => {
     expect(ws[0].status).toBe('unknown');
   });
 });
+
+describe('HcpTfClient retry backoff', () => {
+  const realFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = realFetch;
+    jest.useRealTimers();
+  });
+
+  it('caps a server-supplied Retry-After at 30 seconds', async () => {
+    jest.useFakeTimers();
+    const client = makeClient();
+    const rateLimited = {
+      ok: false,
+      status: 429,
+      headers: { get: (h: string) => (h === 'retry-after' ? '3600' : null) },
+      json: async () => ({}),
+      text: async () => 'rate limited',
+    };
+    const success = {
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({ data: [], meta: { pagination: { 'next-page': null } } }),
+      text: async () => '',
+    };
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(rateLimited)
+      .mockResolvedValue(success);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const promise = client.listWorkspaces();
+    await jest.advanceTimersByTimeAsync(30_000);
+    // An uncapped Retry-After of 3600s would still be sleeping here.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await expect(promise).resolves.toEqual([]);
+  });
+});
