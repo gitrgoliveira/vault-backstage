@@ -64,22 +64,22 @@ This repository is a complete Backstage app, so the simplest path — if you do 
 
 > **Prerequisites / caveats (verify before you start):**
 > - Your app must use the **new Backstage frontend system** (`@backstage/frontend-defaults`, `createApp({ features: [...] })`) — the frontend modules below register that way and will not load in a legacy `createApp`/`App.tsx` route setup.
-> - Both reusable plugins use the `@internal` scope. They can be installed from npm once published to a registry, or consumed directly as workspace packages (copy the directory and wire in `package.json`).
+> - Both reusable plugins are published to GitHub Packages under the `@gitrgoliveira` scope. They can be installed with `yarn add`, or consumed directly as workspace packages (copy the directory and wire in `package.json`).
 > - The [nine no-code modules](#required-terraform-module-repositories) must already be published to *your* HCP Terraform organization's private registry.
 
 **1. Backend plugin.**
 
-- **Option A (npm, once published):** `yarn add @internal/plugin-hcp-terraform-backend`
+- **Option A (GitHub Packages):** `yarn add @gitrgoliveira/plugin-hcp-terraform-backend`
 - **Option B (workspace):** Copy [`plugins/hcp-terraform-backend/`](plugins/hcp-terraform-backend) into your `plugins/` directory and add the workspace dependency to `packages/backend/package.json`:
 
 ```json
-"@internal/plugin-hcp-terraform-backend": "workspace:plugins/hcp-terraform-backend"
+"@gitrgoliveira/plugin-hcp-terraform-backend": "workspace:plugins/hcp-terraform-backend"
 ```
 
 Then wire the modules in [`packages/backend/src/index.ts`](packages/backend/src/index.ts):
 
 ```ts
-import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@internal/plugin-hcp-terraform-backend';
+import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@gitrgoliveira/plugin-hcp-terraform-backend';
 
 backend.add(hcpTerraformScaffolderModule); // scaffolder actions (provision/destroy no-code workspaces)
 backend.add(hcpTerraformCatalogModule);    // vault-workspace catalog entity provider
@@ -89,17 +89,17 @@ Optional: copy `packages/backend/src/permissions.ts` and `backend.add(vaultIdpPe
 
 **2. Frontend plugin.**
 
-- **Option A (npm, once published):** `yarn add @internal/plugin-vault-frontend`
+- **Option A (GitHub Packages):** `yarn add @gitrgoliveira/plugin-vault-frontend`
 - **Option B (workspace):** Copy [`plugins/vault-frontend/`](plugins/vault-frontend) into your `plugins/` directory and add the workspace dependency to `packages/app/package.json`:
 
 ```json
-"@internal/plugin-vault-frontend": "workspace:plugins/vault-frontend"
+"@gitrgoliveira/plugin-vault-frontend": "workspace:plugins/vault-frontend"
 ```
 
 Then wire the modules in [`packages/app/src/App.tsx`](packages/app/src/App.tsx):
 
 ```ts
-import { vaultCatalogModule, vaultScaffolderModule } from '@internal/plugin-vault-frontend';
+import { vaultCatalogModule, vaultScaffolderModule } from '@gitrgoliveira/plugin-vault-frontend';
 
 export default createApp({
   features: [/* ...existing... */, vaultCatalogModule, vaultScaffolderModule],

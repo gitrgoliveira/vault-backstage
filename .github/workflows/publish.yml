@@ -1,0 +1,47 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish plugins to GitHub Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate type declarations
+        run: yarn tsc:full
+
+      - name: Build plugins
+        run: |
+          yarn workspace @gitrgoliveira/plugin-hcp-terraform-backend build
+          yarn workspace @gitrgoliveira/plugin-vault-frontend build
+
+      - name: Configure registry auth
+        run: yarn config set --home 'npmRegistries["//npm.pkg.github.com"].npmAuthToken' "${GITHUB_TOKEN}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # publishConfig.registry in each plugin's package.json routes the publish
+      # to GitHub Packages; --tolerate-republish makes re-runs of the same
+      # version a no-op instead of a failure.
+      - name: Publish plugins
+        run: |
+          yarn workspace @gitrgoliveira/plugin-hcp-terraform-backend npm publish --tolerate-republish
+          yarn workspace @gitrgoliveira/plugin-vault-frontend npm publish --tolerate-republish

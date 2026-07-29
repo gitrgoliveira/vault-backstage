@@ -1,12 +1,18 @@
 {
-  "name": "@internal/plugin-hcp-terraform-backend",
+  "name": "@gitrgoliveira/plugin-hcp-terraform-backend",
   "version": "0.1.0",
   "backstage": {
     "role": "backend-plugin-module"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitrgoliveira/vault-backstage.git",
+    "directory": "plugins/hcp-terraform-backend"
+  },
   "main": "src/index.ts",
   "types": "src/index.ts",
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
     "main": "dist/index.cjs.js",
     "types": "dist/index.d.ts"
   },

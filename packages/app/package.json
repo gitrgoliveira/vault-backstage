@@ -41,7 +41,7 @@
     "@backstage/plugin-techdocs-module-addons-contrib": "^1.1.37",
     "@backstage/plugin-user-settings": "^0.9.4",
     "@backstage/ui": "^0.16.0",
-    "@internal/plugin-vault-frontend": "workspace:plugins/vault-frontend",
+    "@gitrgoliveira/plugin-vault-frontend": "workspace:plugins/vault-frontend",
     "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.61",
