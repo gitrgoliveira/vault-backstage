@@ -1,0 +1,60 @@
+# L1 — Vault Trust Onboarding
+
+## What it does
+
+Establishes OIDC trust between Vault and an external identity provider by mounting a JWT auth backend. This enables workloads from that provider to authenticate to Vault using their native tokens.
+
+Two trust types are supported:
+
+- **Kubernetes / OpenShift cluster** — uses the cluster's ServiceAccount OIDC issuer
+- **GitLab instance** — uses GitLab CI/CD ID tokens
+
+## Terraform modules
+
+| Trust type | Module |
+|-----------|--------|
+| Kubernetes | [`terraform-vault-cluster-onboarding`](../modules/cluster-onboarding.md) |
+| GitLab | [`terraform-vault-gitlab-onboarding`](../modules/gitlab-onboarding.md) |
+
+## Form fields
+
+### Common fields
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **Tenant / Environment** | Yes | Entity Picker | Select the tenant target created by L0. Filters to `vault-target` Resources. |
+| **Workspace Name** | Yes | `string` | Unique HCP TF workspace name, e.g. `sdi-dev-cluster-trust`. |
+| **Trust Type** | Yes | `enum` | `Kubernetes / OpenShift cluster` or `GitLab instance`. |
+
+### Kubernetes-specific fields
+
+![Trust Onboarding form — Kubernetes cluster](../img/trust-onboarding-cluster.png)
+
+Shown when Trust Type = **Kubernetes / OpenShift cluster**:
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **Cluster Name** | Yes | `string` | Short unique cluster identifier, e.g. `ocp-prod-eu`. Downstream templates reference this name exactly. |
+| **JWT Issuer URL** | Yes | `string` | The cluster's OIDC issuer URL (`kube-apiserver --service-account-issuer`). |
+| **OIDC Discovery URL** | No | `string` | Override the OIDC discovery endpoint if it differs from the issuer. |
+
+### GitLab-specific fields
+
+![Trust Onboarding form — GitLab instance](../img/trust-onboarding-gitlab.png)
+
+Shown when Trust Type = **GitLab instance**:
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **GitLab Instance** | Yes | `enum` | `cloud`, `dedicated-prod`, or `dedicated-dev`. |
+| **OIDC Discovery URL** | Yes | `string` | The GitLab OIDC discovery URL, e.g. `https://gitlab.com` for GitLab SaaS. |
+
+## Output
+
+- **HCP Terraform run status**
+- **Link to the HCP Terraform Workspace**
+- **Link to the HCP Terraform Run**
+
+## What to do next
+
+With trust established, application teams can register their workloads via [L2 — Workload Onboarding](workload-onboarding.md).

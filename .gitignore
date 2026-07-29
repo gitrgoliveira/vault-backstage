@@ -39,6 +39,7 @@ dist-types
 
 # MkDocs build output
 site
+_site
 
 # Local configuration files
 *.local.yaml

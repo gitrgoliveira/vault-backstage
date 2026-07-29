@@ -10,7 +10,7 @@ ifneq (,$(wildcard .env))
   export
 endif
 
-.PHONY: help versions check-node install install-ignore-scripts dev start build lint tsc typecheck test check generate docs-deps verify-hcptf backfill-parent-tags image clean
+.PHONY: help versions check-node install install-ignore-scripts dev start build lint tsc typecheck test check generate docs-deps docs-site docs-serve screenshots verify-hcptf backfill-parent-tags image clean
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
@@ -75,7 +75,16 @@ backfill-parent-tags: ## Infer & tag parent:<name> on existing workspaces for th
 docs-deps: ## Install local TechDocs build deps into an isolated venv
 	python3 -m venv $(TECHDOCS_VENV)
 	$(TECHDOCS_VENV)/bin/pip install --quiet --upgrade pip
-	$(TECHDOCS_VENV)/bin/pip install --quiet mkdocs mkdocs-techdocs-core
+	$(TECHDOCS_VENV)/bin/pip install --quiet mkdocs mkdocs-techdocs-core mkdocs-material
+
+docs-site: docs-deps ## Build the GitHub Pages documentation site
+	$(TECHDOCS_VENV)/bin/mkdocs build --config-file mkdocs.yml
+
+docs-serve: docs-deps ## Serve the docs site locally with live reload
+	$(TECHDOCS_VENV)/bin/mkdocs serve --config-file mkdocs.yml
+
+screenshots: ## Capture template form screenshots (requires Backstage running)
+	node scripts/capture-screenshots.mjs
 
 image: build ## Build backend Docker image (builds bundle first; requires Docker running)
 	yarn build-image
