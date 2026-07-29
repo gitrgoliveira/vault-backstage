@@ -45,7 +45,7 @@ self-service-vault/              # reference workspace root
 └── (admin bootstrap, private)   # L0 module + the Vault admin structure
 ```
 
-The clone gives you `vault-backstage/` only. The sibling projects are distributed separately, and the admin bootstrap is not public — the Vault structure it creates is documented as a specification in [HCP Vault prerequisites](terraform-modules.md#hcp-vault-prerequisites) so you can reproduce it with your own Terraform.
+The clone gives you `vault-backstage/` only. Each Terraform module also has its own public repository (`github.com/gitrgoliveira/terraform-vault-<module>`), so you can fork and publish them without the workspace layout. Only the admin bootstrap is private — the Vault structure it creates is documented as a specification in [HCP Vault prerequisites](terraform-modules.md#hcp-vault-prerequisites) so you can reproduce it with your own Terraform.
 
 Paths in this section follow two conventions:
 

@@ -2,30 +2,6 @@
 
 A no-code ready module that onboards one tenant onto HCP Vault from HCP Terraform. One invocation onboards one tenant across all of its environments, looping over `var.environments`. For each environment it creates a `<tenant>-Vault-<env>` HCP Terraform project, a `<tenant>` child namespace under the matching environment namespace in HCP Vault, the JWT trust inside that namespace, and a variable set that wires future workspaces in the project to authenticate automatically.
 
-## Inputs
-
-| Name | Type | Default | Description |
-|---|---|---|---|
-| `environments` | `list(string)` | `["dev", "test", "prod"]` | Environments to onboard for the tenant |
-| `project_tags` | `map(string)` | `{ Product = "Vault" }` | Tag bindings applied to each `<tenant>-Vault-<env>` project; workspaces created in the project inherit them as effective tags |
-| `tenant` | `string` | none | Tenant name; used in project names and the tenant namespace path |
-| `vault_address` | `string` | `""` | HCP Vault address; supplied via the `TF_VAR_vault_address` env var from the project variable set |
-| `vault_auth_path` | `string` | `"tf_jwt"` | JWT auth mount path inside each tenant namespace |
-| `vault_role_name` | `string` | `"hcp-tf"` | JWT role name created in each tenant namespace |
-
-The HCP Terraform organization is derived from `TFC_WORKSPACE_SLUG`, and the Vault address arrives as `var.vault_address`, populated by the `TF_VAR_vault_address` environment variable that the project variable set supplies. Both are provided through HCP Terraform; do not set them manually.
-
-## Outputs
-
-| Name | Description |
-|---|---|
-| `project_ids` | Map env to `<tenant>-Vault-<env>` project ID |
-| `project_names` | Map env to `<tenant>-Vault-<env>` project name |
-| `role_names` | Map env to JWT role name |
-| `tenant_namespace_paths` | Map env to tenant namespace `path_fq` (relative to the admin namespace, e.g. `<env>/<tenant>`) |
-| `variable_set_ids` | Map env to variable set ID |
-| `vault_namespaces` | Map env to the fully qualified Vault namespace from the cluster root (`admin/<env>/<tenant>`) |
-
 ## No-code provisioning
 
 This is a [no-code ready module](https://developer.hashicorp.com/terraform/cloud-docs/no-code-provisioning/module-design): it configures its own `vault` and `tfe` providers, so HCP Terraform can provision it without a hand-written caller.
@@ -52,6 +28,8 @@ Those are *environment* variables, and Terraform configuration cannot read envir
 * **Vault address** comes from `var.vault_address`, populated by the `TF_VAR_vault_address` environment variable that the project variable set supplies. (`TF_VAR_`-prefixed env vars are the supported way to feed an environment value into a Terraform variable.) The plain `TFC_VAULT_ADDR` that authenticates the provider is *not* readable in configuration, which is why the admin variable set delivers the address a second time as `TF_VAR_vault_address`.
 
 The module copies that address into `TFC_VAULT_ADDR` on each `<tenant>-Vault-<env>` variable set it creates, so the tenant's future workspaces authenticate to the same Vault. Neither value is a hand-entered module argument.
+
+> **Warning — placeholder tenant policy:** The policy this module attaches to every tenant JWT role is a placeholder with near-namespace-admin access (`path "*"` with full CRUD, and `sys/auth/*` with sudo). The namespace boundary and `bound_claims` below control who can *authenticate*; they do not limit what an authenticated token can *do* inside the tenant namespace. Replace the policy with least-privilege paths before production use.
 
 ## Isolation
 

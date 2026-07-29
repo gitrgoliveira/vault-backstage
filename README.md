@@ -1,6 +1,8 @@
-# Vault backstage onboarding
+# Vault self-service portal
 
-This is your newly scaffolded Backstage App for the internal Vault IDP.
+A Backstage app for self-service HashiCorp Vault onboarding, driven by no-code Terraform modules on HCP Terraform.
+
+Full documentation — getting started, template guides, the Terraform module reference, and the [platform integration guide](https://gitrgoliveira.github.io/vault-backstage/integration/) for adopting these components in your own Backstage instance — lives at **<https://gitrgoliveira.github.io/vault-backstage/>**.
 
 The **Create** page surfaces the self-service Vault onboarding templates — trust (Layer 1), workload (Layer 2), and use-case (Layer 3), plus admin tenant onboarding:
 
@@ -28,7 +30,7 @@ Use the Makefile as the single entry point.
 
 Toolchain policy (verified):
 
-- Node: `24` recommended (`22` also supported by Backstage here). This repo includes `.nvmrc` and `.node-version` pinned to `24`.
+- Node: `26` recommended; `22` and `24` also supported (enforced by the Makefile's `check-node`). This repo includes `.nvmrc` and `.node-version` pinned to `26`.
 - Yarn: `4.13.0` (from scaffolded repo config).
 - Backstage CLI: `0.36.3` (current latest on npm at implementation time).
 
@@ -64,7 +66,7 @@ This repository is a complete Backstage app, so the simplest path — if you do 
 
 > **Prerequisites / caveats (verify before you start):**
 > - Your app must use the **new Backstage frontend system** (`@backstage/frontend-defaults`, `createApp({ features: [...] })`) — the frontend modules below register that way and will not load in a legacy `createApp`/`App.tsx` route setup.
-> - Both reusable plugins are published to GitHub Packages under the `@gitrgoliveira` scope. They can be installed with `yarn add`, or consumed directly as workspace packages (copy the directory and wire in `package.json`).
+> - Both reusable plugins are published to GitHub Packages under the `@gitrgoliveira` scope. They can be installed with `yarn add`, or consumed directly as workspace packages (copy the directory and wire in `package.json`). GitHub Packages requires a personal access token with `read:packages` even for public packages — the [integration guide](https://gitrgoliveira.github.io/vault-backstage/integration/plugin/) shows the registry setup for Yarn 4 and npm.
 > - The [nine no-code modules](#required-terraform-module-repositories) must already be published to *your* HCP Terraform organization's private registry.
 
 **1. Backend plugin.**

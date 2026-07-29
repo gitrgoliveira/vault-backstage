@@ -8,7 +8,7 @@ The source directories below are relative to the reference workspace root descri
 
 | Module | Layer | Source directory |
 |--------|-------|-----------------|
-| `terraform-vault-hcptf-onboarding` | L0 (Admin) | Distributed with the private admin bootstrap |
+| `terraform-vault-hcptf-onboarding` | L0 (Admin) | [Public module repository](https://github.com/gitrgoliveira/terraform-vault-hcptf-onboarding) (the admin bootstrap that deploys it stays private) |
 | `terraform-vault-cluster-onboarding` | L1 (Trust) | `terraform-vault-onboarding/terraform-vault-cluster-onboarding/` |
 | `terraform-vault-gitlab-onboarding` | L1 (Trust) | `terraform-vault-onboarding/terraform-vault-gitlab-onboarding/` |
 | `terraform-vault-add-k8s-namespace-access` | L2 (Workload) | `terraform-vault-onboarding/terraform-vault-add-k8s-namespace-access/` |
@@ -24,7 +24,7 @@ Each module must be published to your HCP Terraform private registry with **no-c
 
 ### 1. Create a VCS connection
 
-Connect your Terraform module repository to HCP Terraform as a [VCS provider](https://developer.hashicorp.com/terraform/cloud-docs/vcs). The module source directories listed above are subdirectories of a monorepo, so use the **module subdirectory** feature when publishing.
+Connect your Terraform module repository to HCP Terraform as a [VCS provider](https://developer.hashicorp.com/terraform/cloud-docs/vcs). Each module also has a standalone public repository (`github.com/gitrgoliveira/terraform-vault-<module>`, linked from the portal README) that you can fork and publish directly. If you publish from the reference workspace monorepo layout instead, use the **module subdirectory** feature with the source directories listed above.
 
 ### 2. Publish each module
 
