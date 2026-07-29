@@ -10,7 +10,7 @@ ifneq (,$(wildcard .env))
   export
 endif
 
-.PHONY: help versions check-node install install-ignore-scripts dev start build lint tsc typecheck test check generate docs-deps docs-site docs-serve screenshots verify-hcptf backfill-parent-tags image clean
+.PHONY: help versions check-node install install-ignore-scripts dev start build lint tsc typecheck test check generate docs-deps docs-site docs-serve screenshots verify-hcptf update-nocode-pins backfill-parent-tags image clean
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "%-14s %s\n", $$1, $$2}'
@@ -68,6 +68,9 @@ generate: ## Generate TechDocs + variable inventory from terraform-docs
 
 verify-hcptf: ## Read-only HCP TF preflight: validate token + auto-resolve no-code module IDs
 	node scripts/verify-hcptf.mjs
+
+update-nocode-pins: ## Pin every Vault no-code module to its latest registry version (needs no-code entitlement)
+	node scripts/update-nocode-pins.mjs
 
 backfill-parent-tags: ## Infer & tag parent:<name> on existing workspaces for the graph (dry-run; ARGS=--apply to write)
 	node scripts/backfill-parent-tags.mjs $(ARGS)
