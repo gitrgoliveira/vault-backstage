@@ -61,7 +61,10 @@ export function ScopedEntityPicker(
     rawErrors,
     idSchema,
     formContext,
-    schema: { title = 'Entity', description = 'Select an entity' },
+    schema: {
+      title = 'Workspace',
+      description = 'Select the workspace this onboarding builds on',
+    },
     uiSchema,
   } = props;
 
@@ -134,9 +137,12 @@ export function ScopedEntityPicker(
   let helperText = description;
   if (scopeField && !scopeName) {
     helperText =
-      'Select the tenant / environment first to list matching workspaces.';
+      'Select the tenant + environment first to list matching workspaces.';
   } else if (scopeName && !loading && scoped.length === 0) {
-    helperText = `No matching workspaces found in "${scopeName}".`;
+    helperText =
+      `No matching workspaces found in “${scopeName}”. ` +
+      'Run the previous-layer onboarding for this tenant first, or wait for ' +
+      'the catalog to refresh (up to 5 minutes).';
   }
 
   return (

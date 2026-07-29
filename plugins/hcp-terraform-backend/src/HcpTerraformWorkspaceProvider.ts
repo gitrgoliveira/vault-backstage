@@ -220,7 +220,9 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
               metadata: {
                 name: ws.name,
                 namespace: 'default',
-                description: `HCP Terraform workspace managed by Vault IDP`,
+                description: target
+                  ? `${layer} workspace for ${target.tenant}/${target.env} (${canonicalModuleName(moduleName)})`
+                  : `${layer} workspace (${canonicalModuleName(moduleName)})`,
                 annotations: {
                   'backstage.io/managed-by-location': `hcp-terraform:${this.organization}`,
                   'backstage.io/managed-by-origin-location': `hcp-terraform:${this.organization}`,
@@ -319,7 +321,7 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
           name: `${t.tenant}-${t.env}`,
           namespace: 'default',
           title: `${t.tenant} / ${t.env}`,
-          description: `Onboarded Vault tenant project "${t.name}" (${t.tenant}, ${t.env}).`,
+          description: `Onboarded Vault tenant project “${t.name}” (${t.tenant}, ${t.env}).`,
           annotations: {
             'backstage.io/managed-by-location': `hcp-terraform:${this.organization}`,
             'backstage.io/managed-by-origin-location': `hcp-terraform:${this.organization}`,

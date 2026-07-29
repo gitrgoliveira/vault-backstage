@@ -27,7 +27,10 @@ export function createRunAction(client: HcpTfClient) {
         `${isDestroy ? 'Destroy' : 'Apply'} via Vault IDP by ${requestedBy}`;
       ctx.logger.info(`hcptf:run:create: workspaceId=${workspaceId} isDestroy=${isDestroy}`);
       if (!isDestroy) {
-        throw new Error('hcptf:run:create currently only supports isDestroy=true.');
+        throw new Error(
+          'hcptf:run:create only supports destroy runs. Set isDestroy: true, ' +
+            'or use hcptf:nocode:provision to create and apply workspaces.',
+        );
       }
       const result = await client.createDestroyRun(workspaceId as string, runMessage);
       ctx.output('runId', result.runId);

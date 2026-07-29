@@ -80,7 +80,7 @@ export function VaultWorkspaceOutputsCard() {
                 <TableCell className={classes.value}>{output.value}</TableCell>
                 <TableCell padding="none">
                   <Tooltip
-                    title={copied === output.key ? 'Copied!' : 'Copy value'}
+                    title={copied === output.key ? 'Copied' : 'Copy value'}
                   >
                     <IconButton
                       aria-label={`Copy ${output.key}`}

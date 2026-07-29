@@ -78,7 +78,7 @@ export function VaultNextLayerCard() {
         <Typography variant="body2" color="textSecondary">
           {layer === 'usecase'
             ? 'This is a use-case (Layer 3) workspace, the final layer in the chain. There is no next layer to create.'
-            : 'No next-layer action is available for this workspace.'}
+            : 'This workspace has no recognized onboarding layer, so there is no next step to offer.'}
         </Typography>
       )}
     </InfoCard>
