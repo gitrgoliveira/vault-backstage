@@ -94,15 +94,22 @@ for (const reg of registry) {
       },
     }));
 
+  // The registry-module relationship is REQUIRED on update (go-tfe
+  // RegistryNoCodeModuleUpdateOptions); omitting it makes the API return 404.
   await api(`/api/v2/no-code-modules/${ncId}`, {
     method: 'PATCH',
     body: JSON.stringify({
       data: {
         type: 'no-code-modules',
         attributes: { 'version-pin': latest, enabled: true },
-        ...(options.length
-          ? { relationships: { 'variable-options': { data: options } } }
-          : {}),
+        relationships: {
+          'registry-module': {
+            data: { id: reg.id, type: 'registry-modules' },
+          },
+          ...(options.length
+            ? { 'variable-options': { data: options } }
+            : {}),
+        },
       },
     }),
   });
