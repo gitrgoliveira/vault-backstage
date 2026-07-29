@@ -25,8 +25,8 @@ theme:
         name: Switch to light mode
   features:
     - navigation.sections
-    - navigation.expand
     - navigation.top
+    - navigation.footer
     - content.code.copy
     - search.highlight
   icon:
@@ -35,12 +35,21 @@ theme:
 plugins:
   - search
 
+extra_css:
+  - stylesheets/extra.css
+
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - attr_list
   - md_in_html
   - tables
@@ -57,8 +66,16 @@ nav:
       - "L1: Trust onboarding": cards/trust-onboarding.md
       - "L2: Workload onboarding": cards/workload-onboarding.md
       - "L3: Use-case onboarding": cards/usecase-onboarding.md
+  - Platform Integration:
+      - Overview: integration/index.md
+      - "1. Publish Terraform modules": integration/terraform-modules.md
+      - "2. Backend plugin": integration/plugin.md
+      - "3. Frontend plugin": integration/plugin-frontend.md
+      - "4. Catalog entities": integration/catalog.md
+      - "5. Scaffolder templates": integration/templates.md
+      - "6. Verify the integration": integration/verify.md
   - Terraform Modules:
-      - Overview: modules/index.md
+      - Module reference: modules/index.md
       - Admin Layer:
           - HCP Terraform onboarding: modules/hcptf-onboarding.md
       - Trust Layer:

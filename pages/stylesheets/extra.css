@@ -1,0 +1,6 @@
+/* Material renders h1 in --md-default-fg-color--light, which fails contrast
+   against the default background; use the full foreground color instead. */
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+  font-weight: 700;
+}

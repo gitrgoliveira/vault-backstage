@@ -27,3 +27,4 @@ The templates are backed by **9 Terraform modules** documented in the [Terraform
 - [Getting started: prerequisites and first run](getting-started.md)
 - [Template cards: step-by-step form guides](cards/index.md)
 - [Terraform modules: reference documentation](modules/index.md)
+- [Platform integration: adopt the components in your own Backstage instance](integration/index.md)
