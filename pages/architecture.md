@@ -10,7 +10,7 @@ The Vault Self-Service Portal uses a layered onboarding model. Each layer builds
 ├──────────────────────────────────────────────────────┤
 │  L2 — Workload                                       │
 │  K8s namespace access · GitLab project access        │
-│  Registers a principal as a Vault identity           │
+│  Registers a workload as a Vault identity            │
 ├──────────────────────────────────────────────────────┤
 │  L1 — Trust                                          │
 │  Cluster onboarding · GitLab onboarding              │

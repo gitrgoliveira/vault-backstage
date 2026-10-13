@@ -88,13 +88,13 @@ spec:
                 parentWorkloadWorkspace:
                   title: Parent Workload Workspace
                   type: string
-                  description: Workload (Layer 2) in the selected tenant that receives database access. Its cluster (or GitLab instance) and workload names identify the Vault entity.
+                  description: Kubernetes workload (Layer 2) in the selected tenant that receives database access. Its cluster and workload names identify the Vault entity and prefix the static role, so pick a connection onboarded for the same cluster.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: workload
+                      metadata.annotations.hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
                     scopeField: onboardedTarget
                 parentPgsqlWorkspace:
                   title: Parent PostgreSQL Connection Workspace
@@ -209,7 +209,7 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
-          cluster_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.cluster_name'] or steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.gitlab_instance_name'] }}
+          cluster_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.cluster_name'] }}
           workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           db_username: ${{ parameters.dbUsername }}
           db_mount_path: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_mount_path'] }}

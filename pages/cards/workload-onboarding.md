@@ -2,7 +2,7 @@
 
 ## What it does
 
-Registers a workload principal, either a Kubernetes ServiceAccount or a GitLab project, as a Vault identity entity. This creates the auth role and identity entity that use-case templates (L3) bind policies to.
+Registers a workload, either a Kubernetes ServiceAccount or a GitLab project, as a Vault identity entity. This creates the auth role and identity entity that use-case templates (L3) bind policies to.
 
 Two workload types are supported:
 

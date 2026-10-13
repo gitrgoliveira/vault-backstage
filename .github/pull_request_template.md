@@ -13,9 +13,9 @@
 <!-- Tick what you ran and paste short evidence (counts, exit codes). Say why if you skipped something. -->
 
 - [ ] `make check` passes (lint 0, tsc 0, tests green)
-- [ ] `make generate` re-run if module docs under `docs/` changed (needs `terraform-docs`)
+- [ ] `make generate` re-run if upstream module READMEs or variables changed; it regenerates `docs/`, so don't hand-edit there (needs `terraform-docs`)
 - [ ] `make verify-hcptf` (read-only) if HCP Terraform client, provider or config changed
-- [ ] Templates exercised in `make dev` (`/create`), if templates changed
+- [ ] Templates exercised in `make dev` (`/create`), if templates changed; `make screenshots` re-run if a form changed
 
 ## Deployment notes
 
@@ -27,7 +27,6 @@
 See [`AGENTS.md`](../AGENTS.md) for the reasoning behind each item.
 
 - [ ] New imports are declared in the importing package's `package.json`
-- [ ] Plugin-internal imports use explicit `.ts` extensions
 - [ ] Output annotation keys use a single dot (`hcptf.io/output.<key>`); tags are lowercase
 - [ ] Renamed template / System / annotation values are updated everywhere they are read (templates, `catalog/`, provider, frontend cards/filters, scripts)
 - [ ] `AGENTS.md` / `README.md` updated if conventions or layout changed

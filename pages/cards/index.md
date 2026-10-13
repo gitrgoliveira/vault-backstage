@@ -10,7 +10,7 @@ The portal surfaces four template cards on the Backstage **Create** page. Each c
 |------|-------|----------|-------------|
 | [Vault Tenant Onboarding (Admin)](admin-onboarding.md) | L0 | Platform team | Creates HCP Terraform projects, Vault namespaces, trust, and variable sets for a new tenant |
 | [Vault Trust Onboarding](trust-onboarding.md) | L1 | Platform team | Mounts a JWT auth backend for a Kubernetes cluster or GitLab instance |
-| [Vault Principal Onboarding](workload-onboarding.md) | L2 | App teams | Registers a Kubernetes ServiceAccount or GitLab project as a Vault identity |
+| [Vault Workload Onboarding](workload-onboarding.md) | L2 | App teams | Registers a Kubernetes ServiceAccount or GitLab project as a Vault identity |
 | [Vault Use-case Onboarding](usecase-onboarding.md) | L3 | App teams | Grants KVv2, PostgreSQL role, custom ACL, or PostgreSQL connection access |
 
 ## Execution flow
