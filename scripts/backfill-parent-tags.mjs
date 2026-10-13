@@ -5,11 +5,12 @@
  * re-provisioning. Mirrors the provider's ingestion filter (Vault-suite module
  * AND Product:Vault-tagged project) and infers each child's parent from the
  * strongest available signal:
- *   - k8s workload  -> trust:       child var jwt_auth_path == trust output jwt_auth_path
- *   - gitlab workload -> trust:     the sole gitlab-onboarding trust in the project
- *                                   (or matched on gitlab_instance_name)
+ *   - k8s workload  -> trust:       child var cluster_name == cluster-onboarding var cluster_name
+ *   - gitlab workload -> trust:     child var gitlab_instance_name == gitlab-onboarding var
  *   - use-case -> workload:         child var entity_id == workload output entity_id
- *                                   (falls back to an exact, unique workload_name match)
+ *                                   (older use-case modules), else the Vault entity
+ *                                   name <cluster>-<workload> built from both sides'
+ *                                   vars, accepted only when unique
  *
  * Dry-run by default; pass --apply to write the tags. Never prints the token.
  * Env: HCP_TF_ORGANIZATION, HCP_TF_TOKEN, HCP_TF_BASE_URL (optional).
@@ -119,26 +120,23 @@ for (const w of wss) {
   byProject.get(w.project).push(w);
 }
 
+// Vault identity entity name shared by a workload and its use-cases.
+const entityNameOf = (scope, vars) =>
+  scope && vars['workload_name'] ? `${scope}-${vars['workload_name']}` : undefined;
+
 function inferParent(child, peers) {
   const others = l => peers.filter(p => p.layer === l && p.id !== child.id);
   if (child.layer === 'workload') {
     const trusts = others('trust');
-    if (child.module === 'add-k8s-namespace-access') {
-      const jp = child.vars['jwt_auth_path'];
-      const m = trusts.find(t => jp && t.outputs['jwt_auth_path'] === jp);
-      if (m) return { parent: m, why: `jwt_auth_path=${jp}` };
-    }
-    if (child.module === 'add-gitlab-project-access') {
-      const gitlabTrusts = trusts.filter(t => t.module === 'gitlab-onboarding');
-      if (gitlabTrusts.length === 1) {
-        return { parent: gitlabTrusts[0], why: 'sole gitlab trust in project' };
-      }
-      const inst = child.vars['gitlab_instance_name'];
-      const m = gitlabTrusts.find(
-        t => inst && (t.vars['gitlab_instance_name'] === inst || t.outputs['gitlab_instance_name'] === inst),
-      );
-      if (m) return { parent: m, why: `gitlab_instance_name=${inst}` };
-    }
+    // Workload modules derive their JWT mount from the trust's scope name, so
+    // the trust is the one onboarded with the same cluster / GitLab instance.
+    const [trustModule, key] =
+      child.module === 'add-k8s-namespace-access'
+        ? ['cluster-onboarding', 'cluster_name']
+        : ['gitlab-onboarding', 'gitlab_instance_name'];
+    const scope = child.vars[key];
+    const m = scope && trusts.find(t => t.module === trustModule && t.vars[key] === scope);
+    if (m) return { parent: m, why: `${key}=${scope}` };
     return null;
   }
   if (child.layer === 'usecase') {
@@ -146,10 +144,13 @@ function inferParent(child, peers) {
     const eid = child.vars['entity_id'];
     const byEntity = eid ? workloads.find(p => p.outputs['entity_id'] === eid) : undefined;
     if (byEntity) return { parent: byEntity, why: `entity_id=${eid}` };
-    // Weaker fallback: exact workload name, accepted only when unambiguous.
-    const wn = child.vars['workload_name'];
-    const byName = wn ? workloads.filter(p => p.vars['workload_name'] === wn) : [];
-    if (byName.length === 1) return { parent: byName[0], why: `workload_name=${wn}` };
+    // Current use-case modules have no entity_id input; they look the entity up
+    // by name, so match on that same <cluster>-<workload> name.
+    const name = entityNameOf(child.vars['cluster_name'], child.vars);
+    const byName = name
+      ? workloads.filter(p => entityNameOf(p.vars['cluster_name'] ?? p.vars['gitlab_instance_name'], p.vars) === name)
+      : [];
+    if (byName.length === 1) return { parent: byName[0], why: `entity name=${name}` };
     return null;
   }
   return null;

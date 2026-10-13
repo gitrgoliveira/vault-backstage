@@ -7,7 +7,7 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
-import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@internal/plugin-hcp-terraform-backend';
+import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@gitrgoliveira/plugin-hcp-terraform-backend';
 import { vaultIdpPermissionModule } from './permissions.ts';
 
 const backend = createBackend();

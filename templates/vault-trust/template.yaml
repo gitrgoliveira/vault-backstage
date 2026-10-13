@@ -72,7 +72,7 @@ spec:
                   title: GitLab Instance
                   type: string
                   description: Which GitLab instance to establish trust with.
-                  enum: [cloud, dedicated_prod, dedicated_dev]
+                  enum: [cloud, dedicated-prod, dedicated-dev]
                 oidcDiscoveryUrl:
                   title: OIDC Discovery URL
                   type: string

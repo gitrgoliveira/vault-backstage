@@ -14,22 +14,9 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import { useEffect, useMemo } from 'react';
 import useAsync from 'react-use/esm/useAsync';
 
-/**
- * `ui:options` accepted by {@link ScopedEntityPicker}.
- */
 export type ScopedEntityPickerUiOptions = {
-  /** Static catalog filter, same shape as EntityPicker's `catalogFilter`. */
   catalogFilter?: Record<string, unknown> | Record<string, unknown>[];
-  /**
-   * Name of a sibling form field whose selected entity defines the scope
-   * (e.g. `onboardedTarget`). Only candidates whose `scopeAnnotation` equals
-   * that entity's name are shown.
-   */
   scopeField?: string;
-  /**
-   * Candidate annotation compared against the scope entity's name.
-   * Defaults to `hcptf.io/target`.
-   */
   scopeAnnotation?: string;
 };
 
@@ -64,12 +51,6 @@ function buildCatalogFilter(
     : toQuery(catalogFilter);
 }
 
-/**
- * A scaffolder EntityPicker variant that additionally restricts the candidate
- * entities to those belonging to the tenant/environment selected in a sibling
- * form field. This prevents users from linking a Vault use-case to a parent
- * workspace that lives in a different tenant project.
- */
 export function ScopedEntityPicker(
   props: FieldExtensionComponentProps<string, ScopedEntityPickerUiOptions>,
 ) {
@@ -80,20 +61,18 @@ export function ScopedEntityPicker(
     rawErrors,
     idSchema,
     formContext,
-    schema: { title = 'Entity', description = 'Select an entity' },
+    schema: {
+      title = 'Workspace',
+      description = 'Select the workspace this onboarding builds on',
+    },
     uiSchema,
   } = props;
 
   const options = uiSchema['ui:options'] ?? {};
   const catalogApi = useApi(catalogApiRef);
-  const filter = buildCatalogFilter(options);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- options is derived from uiSchema; uiSchema is the stable RJSF reference
+  const filter = useMemo(() => buildCatalogFilter(options), [uiSchema]);
 
-  // Seed the field with an empty string when it is undefined so its key is
-  // present in the form data. The scaffolder only runs custom field validation
-  // for keys that exist in form data, and RJSF strips untouched string fields
-  // (especially inside `dependencies.oneOf`) to `undefined`. Without this, a
-  // never-touched required picker would skip validation and reach the backend
-  // empty, failing `catalog:fetch` with an opaque "Missing entity reference".
   useEffect(() => {
     if (formData === undefined) {
       onChange('');
@@ -130,7 +109,7 @@ export function ScopedEntityPicker(
       ],
     });
     return items;
-  }, [catalogApi, JSON.stringify(filter)]);
+  }, [catalogApi, filter]);
 
   const scoped = useMemo(() => {
     const items = entities ?? [];
@@ -158,9 +137,12 @@ export function ScopedEntityPicker(
   let helperText = description;
   if (scopeField && !scopeName) {
     helperText =
-      'Select the tenant / environment first to list matching workspaces.';
+      'Select the tenant + environment first to list matching workspaces.';
   } else if (scopeName && !loading && scoped.length === 0) {
-    helperText = `No matching workspaces found in "${scopeName}".`;
+    helperText =
+      `No matching workspaces found in “${scopeName}”. ` +
+      'Run the previous-layer onboarding for this tenant first, or wait for ' +
+      'the catalog to refresh (up to 5 minutes).';
   }
 
   return (

@@ -31,12 +31,6 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-/**
- * Renders the non-sensitive Terraform outputs of a vault-workspace Resource as a
- * copyable key/value table. Outputs are sourced from `hcptf.io/output.<key>`
- * annotations populated by HcpTerraformWorkspaceProvider. Sensitive outputs are
- * never emitted as annotations, so they never appear here.
- */
 export function VaultWorkspaceOutputsCard() {
   const classes = useStyles();
   const { entity } = useEntity();
@@ -86,7 +80,7 @@ export function VaultWorkspaceOutputsCard() {
                 <TableCell className={classes.value}>{output.value}</TableCell>
                 <TableCell padding="none">
                   <Tooltip
-                    title={copied === output.key ? 'Copied!' : 'Copy value'}
+                    title={copied === output.key ? 'Copied' : 'Copy value'}
                   >
                     <IconButton
                       aria-label={`Copy ${output.key}`}

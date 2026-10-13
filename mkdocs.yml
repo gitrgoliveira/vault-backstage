@@ -1,0 +1,97 @@
+site_name: Vault Self-Service Portal
+site_description: Documentation for the Vault Self-Service IDP built on Backstage and HCP Terraform
+docs_dir: pages
+site_dir: _site
+site_url: https://gitrgoliveira.github.io/vault-backstage/
+repo_url: https://github.com/gitrgoliveira/vault-backstage
+repo_name: gitrgoliveira/vault-backstage
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  font:
+    text: Public Sans
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - smarty
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Getting Started: getting-started.md
+  - Template Cards:
+      - Overview: cards/index.md
+      - "L0: Tenant onboarding": cards/admin-onboarding.md
+      - "L1: Trust onboarding": cards/trust-onboarding.md
+      - "L2: Workload onboarding": cards/workload-onboarding.md
+      - "L3: Use-case onboarding": cards/usecase-onboarding.md
+  - Platform Integration:
+      - Overview: integration/index.md
+      - "1. Publish Terraform modules": integration/terraform-modules.md
+      - "2. Backend plugin": integration/plugin.md
+      - "3. Frontend plugin": integration/plugin-frontend.md
+      - "4. Catalog entities": integration/catalog.md
+      - "5. Scaffolder templates": integration/templates.md
+      - "6. Verify the integration": integration/verify.md
+  - Terraform Modules:
+      - Module reference: modules/index.md
+      - Admin Layer:
+          - HCP Terraform onboarding: modules/hcptf-onboarding.md
+      - Trust Layer:
+          - Cluster onboarding: modules/cluster-onboarding.md
+          - GitLab onboarding: modules/gitlab-onboarding.md
+      - Workload Layer:
+          - Kubernetes namespace access: modules/add-k8s-namespace-access.md
+          - GitLab project access: modules/add-gitlab-project-access.md
+      - Use-case Layer:
+          - KV v2 access: modules/add-kvv2.md
+          - PostgreSQL role: modules/add-pgsql-role.md
+          - Permission group: modules/add-permission-group.md
+          - PostgreSQL connection: modules/pgsql-onboarding.md

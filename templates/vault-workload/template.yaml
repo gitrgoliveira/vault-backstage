@@ -95,7 +95,7 @@ spec:
                   title: GitLab Instance
                   type: string
                   description: Which GitLab instance hosts the project (must match the onboarded GitLab trust).
-                  enum: [cloud, dedicated_prod, dedicated_dev]
+                  enum: [cloud, dedicated-prod, dedicated-dev]
                 gitlabProjectId:
                   title: GitLab Project ID
                   type: string
@@ -153,8 +153,6 @@ spec:
           workload_name: ${{ parameters.workloadName }}
           ocp_namespace: ${{ parameters.ocpNamespace }}
           service_account_name: ${{ parameters.serviceAccountName }}
-          jwt_auth_path: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_auth_path'] }}
-          jwt_mount_accessor: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.jwt_mount_accessor'] }}
 
     - id: gitlab
       name: Provision GitLab workload

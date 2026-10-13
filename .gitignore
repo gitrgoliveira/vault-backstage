@@ -39,6 +39,7 @@ dist-types
 
 # MkDocs build output
 site
+_site
 
 # Local configuration files
 *.local.yaml
@@ -57,3 +58,4 @@ e2e-test-report/
 generated/
 docs/*/site/
 .venv-techdocs/
+.impeccable/

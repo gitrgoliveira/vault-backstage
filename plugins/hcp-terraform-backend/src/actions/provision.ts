@@ -13,8 +13,7 @@ export function toTfVars(
   sensitive?: Record<string, boolean>,
 ): TfVar[] {
   return Object.entries(vars)
-    // Drop empty values so a module never receives an unset/blank var.
-    .filter(([, value]) => value !== undefined && value !== null && String(value) !== '')
+    .filter(([, value]) => value !== undefined && value !== null)
     .map(([key, value]) => ({
       key,
       value: String(value ?? ''),

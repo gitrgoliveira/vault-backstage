@@ -1,5 +1,5 @@
-import { moduleNameFromSourceId } from './HcpTerraformWorkspaceProvider.ts';
-import { canonicalModuleName, layerForModule } from './moduleLayer.ts';
+import { moduleNameFromSourceId } from './HcpTerraformWorkspaceProvider';
+import { canonicalModuleName, layerForModule } from './moduleLayer';
 
 describe('moduleNameFromSourceId', () => {
   it('extracts the short registry name from a source-module-id', () => {
