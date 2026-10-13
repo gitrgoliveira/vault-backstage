@@ -9,8 +9,7 @@
  *   - gitlab workload -> trust:     the sole gitlab-onboarding trust in the project
  *                                   (or matched on gitlab_instance_name)
  *   - use-case -> workload:         child var entity_id == workload output entity_id
- *                                   (falls back to an exact, unique workload_name match;
- *                                   legacy modules used principal_name)
+ *                                   (falls back to an exact, unique workload_name match)
  *
  * Dry-run by default; pass --apply to write the tags. Never prints the token.
  * Env: HCP_TF_ORGANIZATION, HCP_TF_TOKEN, HCP_TF_BASE_URL (optional).
@@ -120,9 +119,6 @@ for (const w of wss) {
   byProject.get(w.project).push(w);
 }
 
-// Legacy module versions named this input/output principal_name.
-const workloadNameOf = m => m['workload_name'] ?? m['principal_name'];
-
 function inferParent(child, peers) {
   const others = l => peers.filter(p => p.layer === l && p.id !== child.id);
   if (child.layer === 'workload') {
@@ -151,10 +147,8 @@ function inferParent(child, peers) {
     const byEntity = eid ? workloads.find(p => p.outputs['entity_id'] === eid) : undefined;
     if (byEntity) return { parent: byEntity, why: `entity_id=${eid}` };
     // Weaker fallback: exact workload name, accepted only when unambiguous.
-    const wn = workloadNameOf(child.vars);
-    const byName = wn
-      ? workloads.filter(p => (workloadNameOf(p.outputs) ?? workloadNameOf(p.vars)) === wn)
-      : [];
+    const wn = child.vars['workload_name'];
+    const byName = wn ? workloads.filter(p => p.vars['workload_name'] === wn) : [];
     if (byName.length === 1) return { parent: byName[0], why: `workload_name=${wn}` };
     return null;
   }

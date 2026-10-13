@@ -236,7 +236,7 @@ spec:
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.clusterName }}
-          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] or steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.principal_name'] }}
+          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           k8s_namespace: ${{ parameters.k8sNamespace }}
           integration_type: kubernetes
           entity_id: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
@@ -255,7 +255,7 @@ spec:
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.scopeName }}
-          workload_name: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] or steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.principal_name'] }}
+          workload_name: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           integration_type: gitlab
           entity_id: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
           auth_role_name: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
@@ -273,7 +273,7 @@ spec:
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.clusterName }}
-          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] or steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.principal_name'] }}
+          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           db_username: ${{ parameters.dbUsername }}
           entity_id: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
           auth_role_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.auth_role_name'] }}
@@ -293,7 +293,7 @@ spec:
         vars:
           usecase_name: ${{ parameters.usecaseName }}
           cluster_name: ${{ parameters.clusterName }}
-          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] or steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.principal_name'] }}
+          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           secret_path: ${{ parameters.secretPath }}
           entity_id: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.entity_id'] }}
           capability_read: ${{ parameters.capabilityRead }}
