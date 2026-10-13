@@ -10,7 +10,9 @@
  *   - use-case -> workload:         child var entity_id == workload output entity_id
  *                                   (older use-case modules), else the Vault entity
  *                                   name <cluster>-<workload> built from both sides'
- *                                   vars, accepted only when unique
+ *                                   vars, accepted only when unique; older GitLab KV
+ *                                   use-cases fall back to a unique GitLab workload_name
+ * Parents must be applied (have outputs) and match uniquely; anything else is skipped.
  *
  * Dry-run by default; pass --apply to write the tags. Never prints the token.
  * Env: HCP_TF_ORGANIZATION, HCP_TF_TOKEN, HCP_TF_BASE_URL (optional).
@@ -124,33 +126,61 @@ for (const w of wss) {
 const entityNameOf = (scope, vars) =>
   scope && vars['workload_name'] ? `${scope}-${vars['workload_name']}` : undefined;
 
+// Trust module and scope variable each workload module is onboarded under.
+const TRUST_FOR_WORKLOAD = {
+  'add-k8s-namespace-access': ['cluster-onboarding', 'cluster_name'],
+  'add-gitlab-project-access': ['gitlab-onboarding', 'gitlab_instance_name'],
+};
+
+// A link is written only when exactly one candidate matches; anything else is
+// skipped rather than guessed.
+const unique = (list, why) => (list.length === 1 ? { parent: list[0], why } : null);
+
 function inferParent(child, peers) {
-  const others = l => peers.filter(p => p.layer === l && p.id !== child.id);
+  // Only applied workspaces can be parents: a failed or never-applied retry
+  // shares the same vars but owns no Vault objects.
+  const applied = l =>
+    peers.filter(p => p.layer === l && p.id !== child.id && Object.keys(p.outputs).length > 0);
   if (child.layer === 'workload') {
-    const trusts = others('trust');
+    const trustFor = TRUST_FOR_WORKLOAD[child.module];
+    if (!trustFor) return null;
     // Workload modules derive their JWT mount from the trust's scope name, so
     // the trust is the one onboarded with the same cluster / GitLab instance.
-    const [trustModule, key] =
-      child.module === 'add-k8s-namespace-access'
-        ? ['cluster-onboarding', 'cluster_name']
-        : ['gitlab-onboarding', 'gitlab_instance_name'];
+    const [trustModule, key] = trustFor;
     const scope = child.vars[key];
-    const m = scope && trusts.find(t => t.module === trustModule && t.vars[key] === scope);
-    if (m) return { parent: m, why: `${key}=${scope}` };
-    return null;
+    if (!scope) return null;
+    return unique(
+      applied('trust').filter(t => t.module === trustModule && t.vars[key] === scope),
+      `${key}=${scope}`,
+    );
   }
   if (child.layer === 'usecase') {
-    const workloads = others('workload');
+    const workloads = applied('workload');
     const eid = child.vars['entity_id'];
-    const byEntity = eid ? workloads.find(p => p.outputs['entity_id'] === eid) : undefined;
-    if (byEntity) return { parent: byEntity, why: `entity_id=${eid}` };
-    // Current use-case modules have no entity_id input; they look the entity up
-    // by name, so match on that same <cluster>-<workload> name.
+    if (eid) {
+      // Older use-case modules took the entity id as an input.
+      const byEntity = unique(workloads.filter(p => p.outputs['entity_id'] === eid), `entity_id=${eid}`);
+      if (byEntity) return byEntity;
+    }
+    // Current use-case modules look the entity up by <cluster>-<workload>.
     const name = entityNameOf(child.vars['cluster_name'], child.vars);
     const byName = name
-      ? workloads.filter(p => entityNameOf(p.vars['cluster_name'] ?? p.vars['gitlab_instance_name'], p.vars) === name)
-      : [];
-    if (byName.length === 1) return { parent: byName[0], why: `entity name=${name}` };
+      ? unique(
+          workloads.filter(p => entityNameOf(p.vars['cluster_name'] ?? p.vars['gitlab_instance_name'], p.vars) === name),
+          `entity name=${name}`,
+        )
+      : null;
+    if (byName) return byName;
+    // GitLab KV use-cases created before cluster_name was derived from the
+    // parent carry a free-text scope, so fall back to the workload name among
+    // GitLab workloads only.
+    const wn = child.vars['workload_name'];
+    if (child.vars['integration_type'] === 'gitlab' && wn) {
+      return unique(
+        workloads.filter(p => p.module === 'add-gitlab-project-access' && p.vars['workload_name'] === wn),
+        `gitlab workload_name=${wn}`,
+      );
+    }
     return null;
   }
   return null;

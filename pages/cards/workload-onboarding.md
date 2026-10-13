@@ -35,10 +35,9 @@ The following fields appear when you set Workload Type to **Kubernetes / OpenShi
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| **Cluster Name** | Yes | `string` | Must match the `cluster_name` from the L1 trust onboarding. |
 | **OCP / K8s Namespace** | Yes | `string` | The namespace the ServiceAccount runs in. |
 | **ServiceAccount Name** | Yes | `string` | Name of the Kubernetes ServiceAccount to bind. |
-| **Parent Trust Workspace** | Yes | Scoped Entity Picker | The L1 cluster trust workspace providing `jwt_auth_path` and `jwt_mount_accessor`. Scoped to the selected tenant. |
+| **Parent Trust Workspace** | Yes | Scoped Entity Picker | The applied L1 cluster trust workspace. Supplies the cluster name, which scopes the JWT mount and the Vault entity name. Scoped to the selected tenant. |
 
 ### GitLab-specific fields
 
@@ -48,10 +47,9 @@ The following fields appear when you set Workload Type to **GitLab project**.
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| **GitLab Instance** | Yes | `enum` | `cloud`, `dedicated-prod`, or `dedicated-dev`. Must match the L1 GitLab trust. |
 | **GitLab Project ID** | Yes | `string` | Numeric project ID (Settings > General > Project ID in GitLab). |
 | **GitLab Project Path** | Yes | `string` | Full path, such as `platform/payments-api`. |
-| **Parent GitLab Trust Workspace** | Yes | Scoped Entity Picker | The L1 GitLab trust workspace. Scoped to the selected tenant. |
+| **Parent GitLab Trust Workspace** | Yes | Scoped Entity Picker | The applied L1 GitLab trust workspace. Supplies the GitLab instance, which scopes the JWT mount and the Vault entity name. Scoped to the selected tenant. |
 
 ## Output
 

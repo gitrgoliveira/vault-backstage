@@ -54,18 +54,10 @@ spec:
       dependencies:
         workloadType:
           oneOf:
-            - required: [clusterName, ocpNamespace, serviceAccountName, parentTrustWorkspace]
+            - required: [ocpNamespace, serviceAccountName, parentTrustWorkspace]
               properties:
                 workloadType:
                   enum: [k8s]
-                clusterName:
-                  title: Cluster Name
-                  type: string
-                  description: >-
-                    Name of the cluster trust this workload lives under. Must
-                    match the cluster_name used when the cluster trust was
-                    onboarded (Layer 1).
-                  pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
                 ocpNamespace:
                   title: OCP / K8s Namespace
                   type: string
@@ -78,24 +70,21 @@ spec:
                   title: Parent Trust Workspace
                   type: string
                   description: >-
-                    The cluster trust workspace (Layer 1) that provides
-                    jwt_auth_path and jwt_mount_accessor for this workload.
+                    The applied cluster trust workspace (Layer 1) this workload
+                    authenticates against. Its cluster name scopes the JWT mount
+                    and the Vault entity name.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: trust
+                      metadata.annotations.hcptf.io/module-name: terraform-vault-cluster-onboarding
+                      metadata.annotations.hcptf.io/output.cluster_name: { exists: true }
                     scopeField: onboardedTarget
-            - required: [gitlabInstanceName, gitlabProjectId, gitlabProjectPath, parentGitlabTrust]
+            - required: [gitlabProjectId, gitlabProjectPath, parentGitlabTrust]
               properties:
                 workloadType:
                   enum: [gitlab]
-                gitlabInstanceName:
-                  title: GitLab Instance
-                  type: string
-                  description: Which GitLab instance hosts the project (must match the onboarded GitLab trust).
-                  enum: [cloud, dedicated-prod, dedicated-dev]
                 gitlabProjectId:
                   title: GitLab Project ID
                   type: string
@@ -108,15 +97,16 @@ spec:
                   title: Parent GitLab Trust Workspace
                   type: string
                   description: >-
-                    The GitLab trust workspace (Layer 1) this project
-                    authenticates against. Used to link the layers in the
-                    catalog graph.
+                    The applied GitLab trust workspace (Layer 1) this project
+                    authenticates against. Its GitLab instance scopes the JWT
+                    mount and the Vault entity name.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-gitlab-onboarding
+                      metadata.annotations.hcptf.io/output.gitlab_instance_name: { exists: true }
                     scopeField: onboardedTarget
   steps:
     - id: fetch-target
@@ -149,7 +139,7 @@ spec:
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
         parentWorkspaceName: ${{ steps['fetch-trust'].output.entity.metadata.name }}
         vars:
-          cluster_name: ${{ parameters.clusterName }}
+          cluster_name: ${{ steps['fetch-trust'].output.entity.metadata.annotations['hcptf.io/output.cluster_name'] }}
           workload_name: ${{ parameters.workloadName }}
           ocp_namespace: ${{ parameters.ocpNamespace }}
           service_account_name: ${{ parameters.serviceAccountName }}
@@ -164,7 +154,7 @@ spec:
         projectId: ${{ steps['fetch-target'].output.entity.metadata.annotations['hcptf.io/project-id'] }}
         parentWorkspaceName: ${{ steps['fetch-gitlab-trust'].output.entity.metadata.name }}
         vars:
-          gitlab_instance_name: ${{ parameters.gitlabInstanceName }}
+          gitlab_instance_name: ${{ steps['fetch-gitlab-trust'].output.entity.metadata.annotations['hcptf.io/output.gitlab_instance_name'] }}
           workload_name: ${{ parameters.workloadName }}
           gitlab_project_id: ${{ parameters.gitlabProjectId }}
           gitlab_project_path: ${{ parameters.gitlabProjectPath }}

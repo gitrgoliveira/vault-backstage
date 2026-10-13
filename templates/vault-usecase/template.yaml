@@ -62,6 +62,7 @@ spec:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
             - required: [usecaseName, parentGitlabWorkload]
               properties:
@@ -78,6 +79,7 @@ spec:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-add-gitlab-project-access
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
             - required: [usecaseName, dbUsername, parentWorkloadWorkspace, parentPgsqlWorkspace]
               properties:
@@ -95,6 +97,7 @@ spec:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
                 parentPgsqlWorkspace:
                   title: Parent PostgreSQL Connection Workspace
@@ -106,6 +109,7 @@ spec:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-pgsql-onboarding
+                      metadata.annotations.hcptf.io/output.db_mount_path: { exists: true }
                     scopeField: onboardedTarget
             - required: [usecaseName, secretPath, parentWorkloadWorkspace]
               properties:
@@ -123,6 +127,7 @@ spec:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/layer: workload
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
                 capabilityRead: { type: boolean, default: true, title: read }
                 capabilityCreate: { type: boolean, default: false, title: create }
@@ -137,9 +142,9 @@ spec:
                   enum: [pgsql-connection]
                 clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 dbName: { title: Database Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                pgConnectionUrl: { title: PostgreSQL Connection URL, type: string }
+                pgConnectionUrl: { title: PostgreSQL Connection URL, type: string, ui:field: Secret }
                 pgUsername: { title: Root Username, type: string }
-                pgPassword: { title: Root Password, type: string, ui:widget: password }
+                pgPassword: { title: Root Password, type: string, ui:field: Secret }
   steps:
     - id: fetch-target
       name: Resolve tenant project
@@ -248,9 +253,9 @@ spec:
         vars:
           cluster_name: ${{ parameters.clusterName }}
           db_name: ${{ parameters.dbName }}
-          pg_connection_url: ${{ parameters.pgConnectionUrl }}
+          pg_connection_url: ${{ secrets.pgConnectionUrl }}
           pg_username: ${{ parameters.pgUsername }}
-          pg_password: ${{ parameters.pgPassword }}
+          pg_password: ${{ secrets.pgPassword }}
         sensitiveVars:
           pg_connection_url: true
           pg_password: true

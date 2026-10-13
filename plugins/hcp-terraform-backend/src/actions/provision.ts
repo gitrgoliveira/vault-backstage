@@ -8,8 +8,15 @@ function needsHcl(value: string): boolean {
   );
 }
 
+/**
+ * Template values that are a single `${{ }}` expression reach the action as
+ * their JSON type (a checkbox parameter arrives as a real boolean), so vars
+ * accept scalars and are sent to HCP Terraform as strings.
+ */
+export type TfVarValue = string | number | boolean;
+
 export function toTfVars(
-  vars: Record<string, string>,
+  vars: Record<string, TfVarValue>,
   sensitive?: Record<string, boolean>,
 ): TfVar[] {
   return Object.entries(vars)
@@ -35,7 +42,7 @@ export function createProvisionAction(client: HcpTfClient) {
         tenant: z => z.string().optional().describe('Tenant name; used to resolve the {tenant}-Vault-{env} project.'),
         environment: z => z.string().optional().describe('Environment (dev/test/prod) for project resolution.'),
         projectName: z => z.string().optional().describe('Exact HCP TF project name (e.g. an admin project). Overrides tenant/env.'),
-        vars: z => z.record(z.string(), z.string()).optional().describe('Terraform variable key/value map.'),
+        vars: z => z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional().describe('Terraform variable key/value map (scalars are sent as strings).'),
         sensitiveVars: z => z.record(z.string(), z.boolean()).optional().describe('Keys to mark as sensitive.'),
         projectId: z => z.string().optional().describe('Explicit HCP TF project ID (overrides tenant/env resolution).'),
         parentWorkspaceName: z => z.string().optional().describe('Name of the previous-layer workspace to link this one to in the catalog graph (recorded as a parent:<name> tag).'),
@@ -101,7 +108,7 @@ export function createProvisionAction(client: HcpTfClient) {
       ctx.logger.info(`Resolved nocode module ID: ${noCodModuleId}`);
 
       const tfVars = toTfVars(
-        vars as Record<string, string>,
+        vars as Record<string, TfVarValue>,
         sensitiveVars as Record<string, boolean>,
       );
 

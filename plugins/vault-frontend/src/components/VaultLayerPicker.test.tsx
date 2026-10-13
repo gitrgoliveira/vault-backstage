@@ -26,7 +26,7 @@ describe('VaultLayerFilter', () => {
     expect(filter.filterEntity(entity({ other: 'workload' }))).toBe(false);
   });
 
-  it('round-trips the selected values through the query string', () => {
+  it('serialises the selected values for the query string', () => {
     expect(new VaultLayerFilter(['trust', 'usecase']).toQueryValue()).toEqual([
       'trust',
       'usecase',

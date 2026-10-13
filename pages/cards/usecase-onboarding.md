@@ -24,7 +24,7 @@ Five use-case types are supported:
 | **Workspace Name** | Yes | `string` | Unique HCP Terraform workspace name, such as `sdi-dev-payments-kv`. |
 | **Use-case Type** | Yes | `enum` | Selects which use-case to provision (see table above). |
 
-The use-case modules find the Vault identity entity by the name `<cluster>-<workload>`, so every use-case backed by a parent workload takes the cluster (or GitLab instance) name and the workload name from that parent's outputs. There are no form fields for them, which keeps them from drifting out of sync with L1/L2.
+The use-case modules find the Vault identity entity by the name `<cluster>-<workload>`, so every use-case backed by a parent workload takes the cluster (or GitLab instance) name and the workload name from that parent's outputs. There are no form fields for them, which keeps them from drifting out of sync with L1/L2. The parent pickers list only workspaces that have been applied, because an unapplied workspace has no outputs to read.
 
 ### KV v2 (Kubernetes workload)
 
@@ -80,9 +80,9 @@ The use-case modules find the Vault identity entity by the name `<cluster>-<work
 |-------|----------|------|-------------|
 | **Cluster / Scope Name** | Yes | `string` | Scope identifier. |
 | **Database Name** | Yes | `string` | Database identifier. |
-| **PostgreSQL Connection URL** | Yes | `string` | Connection string for the database. |
+| **PostgreSQL Connection URL** | Yes | Secret | Connection string for the database. Kept out of the task's parameters and sent to HCP Terraform as a sensitive variable. |
 | **Root Username** | Yes | `string` | Database admin username. |
-| **Root Password** | Yes | `password` | Database admin password (masked in UI). |
+| **Root Password** | Yes | Secret | Database admin password. Kept out of the task's parameters and sent to HCP Terraform as a sensitive variable. |
 
 !!! warning "Sensitive inputs"
     The PostgreSQL connection URL and root password are marked as sensitive variables in HCP Terraform and are never stored in Backstage or the catalog.
