@@ -6,12 +6,14 @@
  * AND Product:Vault-tagged project) and infers each child's parent from the
  * strongest available signal:
  *   - k8s workload  -> trust:       child var cluster_name == cluster-onboarding var cluster_name
- *   - gitlab workload -> trust:     child var gitlab_instance_name == gitlab-onboarding var
+ *   - gitlab workload -> trust:     child var gitlab_instance_name == gitlab-onboarding var gitlab_instance_name
  *   - use-case -> workload:         child var entity_id == workload output entity_id
  *                                   (older use-case modules), else the Vault entity
  *                                   name <cluster>-<workload> built from both sides'
  *                                   vars, accepted only when unique; older GitLab KV
  *                                   use-cases fall back to a unique GitLab workload_name
+ * Use-case parents are limited to the workload types the L3 template accepts
+ * (K8s KV and PostgreSQL roles: Kubernetes; GitLab KV: GitLab; permission groups: either).
  * Parents must be applied (have outputs) and match uniquely; anything else is skipped.
  *
  * Dry-run by default; pass --apply to write the tags. Never prints the token.
@@ -126,11 +128,25 @@ for (const w of wss) {
 const entityNameOf = (scope, vars) =>
   scope && vars['workload_name'] ? `${scope}-${vars['workload_name']}` : undefined;
 
+const K8S_WORKLOAD = 'add-k8s-namespace-access';
+const GITLAB_WORKLOAD = 'add-gitlab-project-access';
+
 // Trust module and scope variable each workload module is onboarded under.
 const TRUST_FOR_WORKLOAD = {
-  'add-k8s-namespace-access': ['cluster-onboarding', 'cluster_name'],
-  'add-gitlab-project-access': ['gitlab-onboarding', 'gitlab_instance_name'],
+  [K8S_WORKLOAD]: ['cluster-onboarding', 'cluster_name'],
+  [GITLAB_WORKLOAD]: ['gitlab-onboarding', 'gitlab_instance_name'],
 };
+
+// Workload modules each use-case accepts as parent, mirroring the L3 template's
+// parent pickers: Kubernetes KV and PostgreSQL roles take Kubernetes workloads,
+// GitLab KV takes GitLab workloads, permission groups take either.
+function parentWorkloadModules(child) {
+  if (child.module === 'add-kvv2') {
+    return child.vars['integration_type'] === 'gitlab' ? [GITLAB_WORKLOAD] : [K8S_WORKLOAD];
+  }
+  if (child.module === 'add-pgsql-role') return [K8S_WORKLOAD];
+  return [K8S_WORKLOAD, GITLAB_WORKLOAD];
+}
 
 // A link is written only when exactly one candidate matches; anything else is
 // skipped rather than guessed.
@@ -155,7 +171,8 @@ function inferParent(child, peers) {
     );
   }
   if (child.layer === 'usecase') {
-    const workloads = applied('workload');
+    const accepted = parentWorkloadModules(child);
+    const workloads = applied('workload').filter(p => accepted.includes(p.module));
     const eid = child.vars['entity_id'];
     if (eid) {
       // Older use-case modules took the entity id as an input.
@@ -177,7 +194,7 @@ function inferParent(child, peers) {
     const wn = child.vars['workload_name'];
     if (child.vars['integration_type'] === 'gitlab' && wn) {
       return unique(
-        workloads.filter(p => p.module === 'add-gitlab-project-access' && p.vars['workload_name'] === wn),
+        workloads.filter(p => p.vars['workload_name'] === wn),
         `gitlab workload_name=${wn}`,
       );
     }
