@@ -67,6 +67,21 @@ describe('nextLayerLink', () => {
     ).toEqual({ kind: 'none' });
   });
 
+  it('links an applied PostgreSQL connection to the PostgreSQL role use-case', () => {
+    const link = nextLayerLink(
+      workspace('pg', {
+        'hcptf.io/layer': 'usecase',
+        'hcptf.io/module-name': 'terraform-vault-pgsql-onboarding',
+        'hcptf.io/output.db_mount_path': 'database/c1',
+      }),
+    );
+    expect(link.kind === 'link' && formDataOf(link.href)).toEqual({
+      useCaseType: 'pgsql-role',
+      parentPgsqlWorkspace: 'resource:default/pg',
+      onboardedTarget: 'resource:default/acme-dev',
+    });
+  });
+
   it('marks use-cases as the final layer', () => {
     expect(
       nextLayerLink(

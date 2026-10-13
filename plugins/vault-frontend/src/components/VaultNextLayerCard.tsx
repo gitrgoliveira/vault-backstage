@@ -47,6 +47,15 @@ const NEXT_BY_MODULE: Record<string, NextStep> = {
     parentField: 'parentGitlabWorkload',
     requiredOutput: 'workload_name',
   },
+  // A PostgreSQL connection is a use-case-layer workspace that is itself the
+  // parent of PostgreSQL role use-cases.
+  'terraform-vault-pgsql-onboarding': {
+    template: 'vault-l3-usecase',
+    label: 'Create PostgreSQL role (Layer 3)',
+    formData: { useCaseType: 'pgsql-role' },
+    parentField: 'parentPgsqlWorkspace',
+    requiredOutput: 'db_mount_path',
+  },
 };
 
 export type NextLayerLink =
@@ -63,9 +72,10 @@ export type NextLayerLink =
  */
 export function nextLayerLink(entity: Entity): NextLayerLink {
   const ann = entity.metadata.annotations ?? {};
-  if (ann[LAYER_ANNOTATION] === 'usecase') return { kind: 'final' };
   const next = NEXT_BY_MODULE[ann['hcptf.io/module-name'] ?? ''];
-  if (!next) return { kind: 'none' };
+  if (!next) {
+    return ann[LAYER_ANNOTATION] === 'usecase' ? { kind: 'final' } : { kind: 'none' };
+  }
   if (!ann[`hcptf.io/output.${next.requiredOutput}`]) {
     return { kind: 'not-applied', label: next.label };
   }
