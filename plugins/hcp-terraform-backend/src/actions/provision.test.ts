@@ -15,6 +15,6 @@ describe('toTfVars', () => {
   });
 
   it('marks keys listed in sensitiveVars as sensitive', () => {
-    expect(toTfVars({ pg_password: 's3cret' }, { pg_password: true })[0].sensitive).toBe(true);
+    expect(toTfVars({ db_url: 'example-value' }, { db_url: true })[0].sensitive).toBe(true);
   });
 });
