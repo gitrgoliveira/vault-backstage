@@ -3,6 +3,7 @@ import { useEntity } from '@backstage/plugin-catalog-react';
 import { InfoCard } from '@backstage/core-components';
 import { Button, Typography } from '@material-ui/core';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
+import { LAYER_ANNOTATION } from './layer';
 
 type NextStep = { template: string; parentField: string; label: string };
 
@@ -11,13 +12,13 @@ type NextStep = { template: string; parentField: string; label: string };
 // current workspace as the parent.
 const NEXT_BY_LAYER: Record<string, NextStep | undefined> = {
   trust: {
-    template: 'vault-l2-principal',
+    template: 'vault-l2-workload',
     parentField: 'parentTrustWorkspace',
-    label: 'Create Principal (Layer 2)',
+    label: 'Create Workload (Layer 2)',
   },
-  principal: {
+  workload: {
     template: 'vault-l3-usecase',
-    parentField: 'parentPrincipalWorkspace',
+    parentField: 'parentWorkloadWorkspace',
     label: 'Create Use-case (Layer 3)',
   },
   usecase: undefined,
@@ -32,7 +33,7 @@ const NEXT_BY_LAYER: Record<string, NextStep | undefined> = {
 export function VaultNextLayerCard() {
   const { entity } = useEntity();
   const ann = entity.metadata.annotations ?? {};
-  const layer = ann['hcptf.io/layer'];
+  const layer = ann[LAYER_ANNOTATION];
   const next = layer ? NEXT_BY_LAYER[layer] : undefined;
 
   let href: string | undefined;
@@ -40,9 +41,9 @@ export function VaultNextLayerCard() {
     const moduleName = ann['hcptf.io/module-name'] ?? '';
     const targetName = ann['hcptf.io/target'];
     const self = `resource:default/${entity.metadata.name}`;
-    // A principal's/trust's parent link is recorded as spec.dependsOn, so the
+    // A workload's/trust's parent link is recorded as spec.dependsOn, so the
     // next layer can pre-select the grandparent (e.g. the trust behind a
-    // principal) as well as this workspace.
+    // workload) as well as this workspace.
     const parentRef = (entity.spec?.dependsOn as string[] | undefined)?.[0];
     const formData: Record<string, string> = {};
     if (targetName) {
@@ -50,27 +51,27 @@ export function VaultNextLayerCard() {
     }
 
     if (layer === 'trust') {
-      // From a trust, preselect the matching principal type and this trust as
+      // From a trust, preselect the matching workload type and this trust as
       // the parent trust field for that type.
       if (moduleName.includes('gitlab-onboarding')) {
-        formData.principalType = 'gitlab';
+        formData.workloadType = 'gitlab';
         formData.parentGitlabTrust = self;
       } else {
-        formData.principalType = 'k8s';
+        formData.workloadType = 'k8s';
         formData.parentTrustWorkspace = self;
       }
-    } else if (layer === 'principal') {
-      // From a principal, preselect the KV use-case matching its type, this
-      // principal as the parent, and its trust (dependsOn) as the parent trust.
+    } else if (layer === 'workload') {
+      // From a workload, preselect the KV use-case matching its type, this
+      // workload as the parent, and its trust (dependsOn) as the parent trust.
       if (moduleName.includes('gitlab-project-access')) {
         formData.useCaseType = 'kvv2-gitlab';
-        formData.parentGitlabPrincipal = self;
+        formData.parentGitlabWorkload = self;
         if (parentRef) {
           formData.parentGitlabTrust = parentRef;
         }
       } else {
         formData.useCaseType = 'kvv2';
-        formData.parentPrincipalWorkspace = self;
+        formData.parentWorkloadWorkspace = self;
         if (parentRef) {
           formData.parentTrustWorkspace = parentRef;
         }

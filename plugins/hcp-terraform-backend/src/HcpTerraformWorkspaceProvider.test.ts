@@ -1,8 +1,5 @@
-import {
-  canonicalModuleName,
-  layerForModule,
-  moduleNameFromSourceId,
-} from './HcpTerraformWorkspaceProvider.ts';
+import { moduleNameFromSourceId } from './HcpTerraformWorkspaceProvider.ts';
+import { canonicalModuleName, layerForModule } from './moduleLayer.ts';
 
 describe('moduleNameFromSourceId', () => {
   it('extracts the short registry name from a source-module-id', () => {
@@ -26,7 +23,7 @@ describe('layerForModule', () => {
     // keys are the long "terraform-vault-*" names. Both must resolve.
     expect(layerForModule('gitlab-onboarding')).toBe('trust');
     expect(layerForModule('hcptf-onboarding')).toBe('trust');
-    expect(layerForModule('add-gitlab-project-access')).toBe('principal');
+    expect(layerForModule('add-gitlab-project-access')).toBe('workload');
     expect(layerForModule('add-kvv2')).toBe('usecase');
   });
 

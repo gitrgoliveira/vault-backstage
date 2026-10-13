@@ -34,11 +34,11 @@ Use-case root configuration.
 ## No-code notes
 
 - This module is the shared database root configuration layer.
-- It creates no principal, policy grant, identity group, or YAML snippets.
+- It creates no workload, policy grant, identity group, or YAML snippets.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `pg_username` and `pg_password` are sensitive.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.1`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `pg_username` and `pg_password` are sensitive.
 
 Form fields:
 
@@ -56,7 +56,7 @@ Form fields:
 ```hcl
 module "onboard_pgsql_connection" {
   source  = "app.terraform.io/<org>/onboard-pgsql-connection/vault"
-  version = "~> 0.1.0"
+  version = "~> 0.1.1"
 
   cluster_name      = "ocp-prod-eu"
   db_name           = "payments-db"

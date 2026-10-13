@@ -1,6 +1,6 @@
 # terraform-vault-add-kvv2
 
-Use-case module that creates a KV-v2 mount, read-only policy, and identity group binding for one principal entity.
+Use-case module that creates a KV-v2 mount, read-only policy, and identity group binding for one workload entity.
 
 ## Layer
 
@@ -8,7 +8,7 @@ Use-case.
 
 ## Prerequisites
 
-- Principal module output `entity_id` and `auth_role_name`
+- Workload module output `entity_id` and `auth_role_name`
 - Trust module output `jwt_auth_path`
 
 ## Inputs
@@ -16,10 +16,10 @@ Use-case.
 | Name | Type | Description |
 |---|---|---|
 | `cluster_name` | `string` | Cluster/scope identifier, regex validated |
-| `principal_name` | `string` | Principal identifier, regex validated |
+| `workload_name` | `string` | Workload identifier, regex validated |
 | `usecase_name` | `string` | Use-case identifier, regex validated |
-| `entity_id` | `string` | Principal entity ID |
-| `auth_role_name` | `string` | Principal login role name |
+| `entity_id` | `string` | Workload entity ID |
+| `auth_role_name` | `string` | Workload login role name |
 | `jwt_auth_path` | `string` | Trust JWT auth path |
 | `integration_type` | `string` | Consumption example style: `kubernetes` (default) or `gitlab` |
 | `jwt_audience` | `string` | Render-only `aud` for the GitLab id_token, default `vault` |
@@ -39,22 +39,22 @@ Use-case.
 
 ## No-code notes
 
-- One module run grants one principal one KV-v2 use-case.
+- One module run grants one workload one KV-v2 use-case.
 - Authorization is delivered through identity group membership (`member_entity_ids = [entity_id]`).
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). Click **Provision workspace** on the module, pick a project and workspace name, then complete the form. `entity_id` and `auth_role_name` come from the principal module.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.2.0`). Click **Provision workspace** on the module, pick a project and workspace name, then complete the form. `entity_id` and `auth_role_name` come from the workload module.
 
 Form fields:
 
 | Field | Required | Notes |
 |---|---|---|
 | `cluster_name` | yes | Cluster/scope identifier |
-| `principal_name` | yes | Principal identifier |
+| `workload_name` | yes | Workload identifier |
 | `usecase_name` | yes | Use-case identifier |
-| `entity_id` | yes | Principal entity ID |
-| `auth_role_name` | yes | Principal login role |
+| `entity_id` | yes | Workload entity ID |
+| `auth_role_name` | yes | Workload login role |
 | `jwt_auth_path` | yes | From trust module |
 | `integration_type` | no | `kubernetes` (default) or `gitlab`; selects the rendered consumption example |
 | `jwt_audience` | no | GitLab id_token audience, default `vault` |
@@ -65,10 +65,10 @@ Form fields:
 ```hcl
 module "add_kvv2" {
   source  = "app.terraform.io/<org>/add-kvv2/vault"
-  version = "~> 0.1.0"
+  version = "~> 0.2.0"
 
   cluster_name   = "ocp-prod-eu"
-  principal_name = "payments"
+  workload_name  = "payments"
   usecase_name   = "app-config"
   entity_id      = "11111111-2222-3333-4444-555555555555"
   auth_role_name = "ocp-prod-eu-payments"
@@ -77,7 +77,7 @@ module "add_kvv2" {
 }
 ```
 
-For a GitLab-based principal, set `integration_type = "gitlab"` (and omit the
+For a GitLab-based workload, set `integration_type = "gitlab"` (and omit the
 `k8s_namespace`); `consumption_examples` then renders a GitLab CI/CD snippet.
 
 ## Example rendered output
@@ -161,10 +161,10 @@ No modules.
 | <a name="input_jwt_auth_path"></a> [jwt\_auth\_path](#input\_jwt\_auth\_path) | JWT auth path used for rendered workload integration snippets. | `string` | n/a | yes |
 | <a name="input_k8s_namespace"></a> [k8s\_namespace](#input\_k8s\_namespace) | Kubernetes namespace used in rendered YAML snippets. | `string` | `""` | no |
 | <a name="input_k8s_service_account"></a> [k8s\_service\_account](#input\_k8s\_service\_account) | Workload Kubernetes ServiceAccount referenced by the rendered VaultAuth CR; VSO mints its projected JWT for Vault login. | `string` | `"default"` | no |
-| <a name="input_principal_name"></a> [principal\_name](#input\_principal\_name) | Principal identifier used in mount, policy, and group naming. | `string` | n/a | yes |
 | <a name="input_usecase_name"></a> [usecase\_name](#input\_usecase\_name) | Use-case identifier used in mount, policy, and group naming. | `string` | n/a | yes |
 | <a name="input_vault_address"></a> [vault\_address](#input\_vault\_address) | Render-only Vault address value supplied via TF\_VAR\_vault\_address. | `string` | `""` | no |
 | <a name="input_vault_namespace"></a> [vault\_namespace](#input\_vault\_namespace) | Render-only Vault namespace value supplied via TF\_VAR\_vault\_namespace. | `string` | `""` | no |
+| <a name="input_workload_name"></a> [workload\_name](#input\_workload\_name) | Workload identifier used in mount, policy, and group naming. | `string` | n/a | yes |
 
 ## Outputs
 

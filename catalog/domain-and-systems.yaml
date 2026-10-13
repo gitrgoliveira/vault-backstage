@@ -18,8 +18,8 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
-  name: vault-principal
-  description: Principal layer modules that onboard identities.
+  name: vault-workload
+  description: Workload layer modules that onboard identities.
 spec:
   owner: group:default/vault-platform
   domain: vault-self-service

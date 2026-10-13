@@ -4,7 +4,7 @@ Trust-layer module that creates one Vault JWT auth backend at `jwt-gitlab/<gitla
 
 ## Layer
 
-Trust. This module creates trust only. It does not create principals, policies, or secret engines.
+Trust. This module creates trust only. It does not create workloads, policies, or secret engines.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 ## No-code notes
 
 - This module is no-code ready and declares its own `vault` provider.
-- It creates trust only and outputs values for principal modules.
+- It creates trust only and outputs values for workload modules.
 - It uses a separate mount path from OCP trust (`jwt-gitlab/<gitlab_instance_name>`).
 
 ## Inputs
@@ -39,7 +39,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `gitlab_instance_name` is presented as a **dropdown** limited to `cloud`, `dedicated_prod`, `dedicated_dev`.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.1`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `gitlab_instance_name` is presented as a **dropdown** limited to `cloud`, `dedicated_prod`, `dedicated_dev`.
 
 > **No-code UX note:** The `gitlab_instance_name` dropdown is driven by explicit no-code `variable-options` configured on the module in the registry, not by the module's `contains()` validation (which only validates on submit). These options (`cloud`, `dedicated_prod`, `dedicated_dev`) are a registry-side setting applied via the `tfe_no_code_module` resource or the no-code modules API. They are not stored in this repository, so re-enabling no-code provisioning for the module requires re-applying them.
 
@@ -56,7 +56,7 @@ Form fields:
 ```hcl
 module "gitlab_onboarding" {
   source  = "app.terraform.io/<org>/gitlab-onboarding/vault"
-  version = "~> 0.1.0"
+  version = "~> 0.1.1"
 
   gitlab_instance_name = "cloud"
   oidc_discovery_url = "https://gitlab.com"
@@ -112,4 +112,4 @@ No modules.
 | ---- | ----------- |
 | <a name="output_gitlab_instance_name"></a> [gitlab\_instance\_name](#output\_gitlab\_instance\_name) | Echo of gitlab\_instance\_name input. |
 | <a name="output_jwt_auth_path"></a> [jwt\_auth\_path](#output\_jwt\_auth\_path) | JWT auth backend path for this GitLab trust mount. |
-| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in principal modules. |
+| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in workload modules. |

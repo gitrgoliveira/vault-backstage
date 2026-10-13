@@ -4,7 +4,7 @@ Trust-layer module that creates one Vault JWT auth backend at `jwt/<cluster_name
 
 ## Layer
 
-Trust. This module creates trust only. It does not create principals, policies, or secret engines.
+Trust. This module creates trust only. It does not create workloads, policies, or secret engines.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 ## No-code notes
 
 - This module is no-code ready and declares its own `vault` provider.
-- It creates trust only and outputs values for principal modules.
+- It creates trust only and outputs values for workload modules.
 - It does not set resource-level `namespace`.
 
 ## Inputs
@@ -39,7 +39,7 @@ Trust. This module creates trust only. It does not create principals, policies, 
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.0`). To deploy without writing HCL: open the module in the registry, click **Provision workspace**, choose a project and workspace name, then complete the form.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.1.1`). To deploy without writing HCL: open the module in the registry, click **Provision workspace**, choose a project and workspace name, then complete the form.
 
 Form fields:
 
@@ -57,7 +57,7 @@ The first run plans automatically after the workspace is created.
 ```hcl
 module "cluster_onboarding" {
   source  = "app.terraform.io/<org>/cluster-onboarding/vault"
-  version = "~> 0.1.0"
+  version = "~> 0.1.1"
 
   cluster_name       = "ocp-prod-eu"
   jwt_issuer         = "https://kubernetes.default.svc"
@@ -114,4 +114,4 @@ No modules.
 | ---- | ----------- |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Echo of cluster\_name input. |
 | <a name="output_jwt_auth_path"></a> [jwt\_auth\_path](#output\_jwt\_auth\_path) | JWT auth backend path for this cluster trust mount. |
-| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in principal modules. |
+| <a name="output_jwt_mount_accessor"></a> [jwt\_mount\_accessor](#output\_jwt\_mount\_accessor) | JWT auth mount accessor for identity alias creation in workload modules. |

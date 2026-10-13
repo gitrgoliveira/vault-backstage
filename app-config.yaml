@@ -179,7 +179,7 @@ catalog:
         - allow: [Template]
 
     - type: file
-      target: ../../templates/vault-principal/template.yaml
+      target: ../../templates/vault-workload/template.yaml
       rules:
         - allow: [Template]
 

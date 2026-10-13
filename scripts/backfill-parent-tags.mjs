@@ -5,15 +5,18 @@
  * re-provisioning. Mirrors the provider's ingestion filter (Vault-suite module
  * AND Product:Vault-tagged project) and infers each child's parent from the
  * strongest available signal:
- *   - k8s principal  -> trust:      child var jwt_auth_path == trust output jwt_auth_path
- *   - gitlab principal -> trust:    the sole gitlab-onboarding trust in the project
+ *   - k8s workload  -> trust:       child var jwt_auth_path == trust output jwt_auth_path
+ *   - gitlab workload -> trust:     the sole gitlab-onboarding trust in the project
  *                                   (or matched on gitlab_instance_name)
- *   - use-case -> principal:        child var entity_id == principal output entity_id
- *                                   (falls back to principal_name)
+ *   - use-case -> workload:         child var entity_id == workload output entity_id
+ *                                   (falls back to an exact, unique workload_name match;
+ *                                   legacy modules used principal_name)
  *
  * Dry-run by default; pass --apply to write the tags. Never prints the token.
  * Env: HCP_TF_ORGANIZATION, HCP_TF_TOKEN, HCP_TF_BASE_URL (optional).
  */
+import { layerForModule } from '../plugins/hcp-terraform-backend/src/moduleLayer.ts';
+
 const org = process.env.HCP_TF_ORGANIZATION;
 const token = process.env.HCP_TF_TOKEN;
 const baseUrl = process.env.HCP_TF_BASE_URL || 'https://app.terraform.io';
@@ -58,17 +61,6 @@ async function listAll(path) {
   return data;
 }
 
-const LAYER = {
-  'cluster-onboarding': 'trust',
-  'gitlab-onboarding': 'trust',
-  'hcptf-onboarding': 'trust',
-  'add-k8s-namespace-access': 'principal',
-  'add-gitlab-project-access': 'principal',
-  'add-kvv2': 'usecase',
-  'add-pgsql-role': 'usecase',
-  'add-permission-group': 'usecase',
-  'pgsql-onboarding': 'usecase',
-};
 const moduleOf = smid => (smid ? (smid.split('/')[2] ?? null) : null);
 
 // Projects (id -> name) and the Product:Vault-tagged project ids.
@@ -95,7 +87,7 @@ const wss = (await listAll(`/api/v2/organizations/${org}/workspaces`))
     tags: w.attributes?.['tag-names'] ?? [],
   }))
   .filter(w => {
-    const layer = w.module ? LAYER[w.module] : undefined;
+    const layer = w.module ? layerForModule(w.module) : undefined;
     return layer && (taggedIds.size === 0 || (w.project && taggedIds.has(w.project)));
   });
 
@@ -116,7 +108,7 @@ async function outputsOf(id) {
   }
 }
 for (const w of wss) {
-  w.layer = LAYER[w.module];
+  w.layer = layerForModule(w.module);
   w.vars = await varsOf(w.id);
   w.outputs = await outputsOf(w.id);
   w.parentTag = w.tags.find(t => t.startsWith('parent:'))?.slice('parent:'.length);
@@ -128,9 +120,12 @@ for (const w of wss) {
   byProject.get(w.project).push(w);
 }
 
+// Legacy module versions named this input/output principal_name.
+const workloadNameOf = m => m['workload_name'] ?? m['principal_name'];
+
 function inferParent(child, peers) {
   const others = l => peers.filter(p => p.layer === l && p.id !== child.id);
-  if (child.layer === 'principal') {
+  if (child.layer === 'workload') {
     const trusts = others('trust');
     if (child.module === 'add-k8s-namespace-access') {
       const jp = child.vars['jwt_auth_path'];
@@ -151,18 +146,16 @@ function inferParent(child, peers) {
     return null;
   }
   if (child.layer === 'usecase') {
-    const principals = others('principal');
+    const workloads = others('workload');
     const eid = child.vars['entity_id'];
-    let m = eid ? principals.find(p => p.outputs['entity_id'] === eid) : undefined;
-    if (!m) {
-      const pn = child.vars['principal_name'];
-      m = pn
-        ? principals.find(
-            p => p.vars['principal_name'] === pn || String(p.outputs['auth_role_name'] ?? '').includes(pn),
-          )
-        : undefined;
-    }
-    if (m) return { parent: m, why: eid ? `entity_id=${eid}` : `principal_name=${child.vars['principal_name']}` };
+    const byEntity = eid ? workloads.find(p => p.outputs['entity_id'] === eid) : undefined;
+    if (byEntity) return { parent: byEntity, why: `entity_id=${eid}` };
+    // Weaker fallback: exact workload name, accepted only when unambiguous.
+    const wn = workloadNameOf(child.vars);
+    const byName = wn
+      ? workloads.filter(p => (workloadNameOf(p.outputs) ?? workloadNameOf(p.vars)) === wn)
+      : [];
+    if (byName.length === 1) return { parent: byName[0], why: `workload_name=${wn}` };
     return null;
   }
   return null;
