@@ -114,10 +114,29 @@ async function selectMuiDropdown(page, fieldLabel, optionValue) {
   await page.keyboard.press('Escape');
 }
 
+// Hard cap on how long the headless browser may stay open; a hung page wait
+// must not leave Chromium running in the background.
+const MAX_RUNTIME_MS = 30 * 60 * 1000;
+
 async function main() {
   console.log(`Connecting to ${baseUrl}...`);
 
   const browser = await chromium.launch({ headless: true });
+  const watchdog = setTimeout(async () => {
+    console.error(`Screenshot capture exceeded ${MAX_RUNTIME_MS / 60000} minutes; closing the browser.`);
+    await browser.close().catch(() => {});
+    process.exit(1);
+  }, MAX_RUNTIME_MS);
+  try {
+    await capture(browser);
+  } finally {
+    clearTimeout(watchdog);
+    await browser.close();
+  }
+  console.log(`\n✅ All screenshots saved to pages/img/`);
+}
+
+async function capture(browser) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2,
@@ -163,9 +182,6 @@ async function main() {
       console.log(`  ✓ saved ${filename}`);
     }
   }
-
-  await browser.close();
-  console.log(`\n✅ All screenshots saved to pages/img/`);
 }
 
 main().catch(err => {
