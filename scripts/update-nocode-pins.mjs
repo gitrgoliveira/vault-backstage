@@ -23,8 +23,10 @@ function fail(msg) {
   console.error(`\n✖ ${msg}`);
   process.exit(1);
 }
-if (!org || org.startsWith('replace-')) fail('HCP_TF_ORGANIZATION is not set (edit .env).');
-if (!token || token.startsWith('replace-')) fail('HCP_TF_TOKEN is not set (edit .env).');
+if (!org || org.startsWith('replace-'))
+  fail('HCP_TF_ORGANIZATION is not set (edit .env).');
+if (!token || token.startsWith('replace-'))
+  fail('HCP_TF_TOKEN is not set (edit .env).');
 
 const headers = {
   'Content-Type': 'application/vnd.api+json',
@@ -34,7 +36,9 @@ async function api(path, opts = {}) {
   const res = await fetch(`${baseUrl}${path}`, { headers, ...opts });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`${opts.method ?? 'GET'} ${path} -> ${res.status} ${body.slice(0, 200)}`);
+    throw new Error(
+      `${opts.method ?? 'GET'} ${path} -> ${res.status} ${body.slice(0, 200)}`,
+    );
   }
   return res.status === 204 ? {} : res.json();
 }
@@ -76,7 +80,9 @@ for (const reg of registry) {
     continue;
   }
 
-  const nc = await api(`/api/v2/no-code-modules/${ncId}?include=variable_options`);
+  const nc = await api(
+    `/api/v2/no-code-modules/${ncId}?include=variable_options`,
+  );
   const pin = nc.data?.attributes?.['version-pin'];
   if (pin === latest) {
     console.log(`✔ ${name}: already pinned to ${latest}`);
@@ -106,9 +112,7 @@ for (const reg of registry) {
           'registry-module': {
             data: { id: reg.id, type: 'registry-modules' },
           },
-          ...(options.length
-            ? { 'variable-options': { data: options } }
-            : {}),
+          ...(options.length ? { 'variable-options': { data: options } } : {}),
         },
       },
     }),

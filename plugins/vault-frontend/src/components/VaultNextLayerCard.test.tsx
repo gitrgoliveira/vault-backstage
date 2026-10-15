@@ -1,10 +1,16 @@
 import type { Entity } from '@backstage/catalog-model';
 import { nextLayerLink } from './VaultNextLayerCard';
 
-const workspace = (name: string, annotations: Record<string, string>): Entity => ({
+const workspace = (
+  name: string,
+  annotations: Record<string, string>,
+): Entity => ({
   apiVersion: 'backstage.io/v1alpha1',
   kind: 'Resource',
-  metadata: { name, annotations: { 'hcptf.io/target': 'acme-dev', ...annotations } },
+  metadata: {
+    name,
+    annotations: { 'hcptf.io/target': 'acme-dev', ...annotations },
+  },
   spec: { type: 'vault-workspace' },
 });
 
@@ -22,7 +28,9 @@ describe('nextLayerLink', () => {
     );
     expect(link.kind).toBe('link');
     if (link.kind !== 'link') return;
-    expect(link.href).toMatch(/^\/create\/templates\/default\/vault-l2-workload\?/);
+    expect(link.href).toMatch(
+      /^\/create\/templates\/default\/vault-l2-workload\?/,
+    );
     expect(formDataOf(link.href)).toEqual({
       workloadType: 'k8s',
       parentTrustWorkspace: 'resource:default/trust-c1',

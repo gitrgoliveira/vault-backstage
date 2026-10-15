@@ -16,8 +16,12 @@ describe('VaultLayerFilter', () => {
 
   it('matches entities whose layer is one of the selected values', () => {
     const filter = new VaultLayerFilter(['trust', 'workload']);
-    expect(filter.filterEntity(entity({ 'hcptf.io/layer': 'workload' }))).toBe(true);
-    expect(filter.filterEntity(entity({ 'hcptf.io/layer': 'usecase' }))).toBe(false);
+    expect(filter.filterEntity(entity({ 'hcptf.io/layer': 'workload' }))).toBe(
+      true,
+    );
+    expect(filter.filterEntity(entity({ 'hcptf.io/layer': 'usecase' }))).toBe(
+      false,
+    );
   });
 
   it('rejects entities without the annotation', () => {

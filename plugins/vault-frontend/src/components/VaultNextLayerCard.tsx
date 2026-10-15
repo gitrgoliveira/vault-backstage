@@ -74,7 +74,9 @@ export function nextLayerLink(entity: Entity): NextLayerLink {
   const ann = entity.metadata.annotations ?? {};
   const next = NEXT_BY_MODULE[ann['hcptf.io/module-name'] ?? ''];
   if (!next) {
-    return ann[LAYER_ANNOTATION] === 'usecase' ? { kind: 'final' } : { kind: 'none' };
+    return ann[LAYER_ANNOTATION] === 'usecase'
+      ? { kind: 'final' }
+      : { kind: 'none' };
   }
   if (!ann[`hcptf.io/output.${next.requiredOutput}`]) {
     return { kind: 'not-applied', label: next.label };

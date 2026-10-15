@@ -26,7 +26,9 @@ const vaultNextLayerCard = EntityCardBlueprint.make({
     type: 'info',
     filter: isVaultWorkspace,
     loader: () =>
-      import('../components/VaultNextLayerCard').then(m => <m.VaultNextLayerCard />),
+      import('../components/VaultNextLayerCard').then(m => (
+        <m.VaultNextLayerCard />
+      )),
   },
 });
 
@@ -34,7 +36,9 @@ const vaultLayerFilter = CatalogFilterBlueprint.make({
   name: 'vault-layer',
   params: {
     loader: () =>
-      import('../components/VaultLayerPicker').then(m => <m.VaultLayerPicker />),
+      import('../components/VaultLayerPicker').then(m => (
+        <m.VaultLayerPicker />
+      )),
   },
 });
 

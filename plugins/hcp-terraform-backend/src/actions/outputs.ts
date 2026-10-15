@@ -4,13 +4,17 @@ import { HcpTfClient } from '../HcpTfClient';
 export function createOutputsReadAction(client: HcpTfClient) {
   return createTemplateAction({
     id: 'hcptf:outputs:read',
-    description: 'Read current state-version outputs from an HCP Terraform workspace.',
+    description:
+      'Read current state-version outputs from an HCP Terraform workspace.',
     schema: {
       input: {
         workspaceId: z => z.string().describe('HCP TF workspace ID (ws-xxx).'),
       },
       output: {
-        outputs: z => z.record(z.string(), z.unknown()).describe('Output key/value map. Sensitive values are masked.'),
+        outputs: z =>
+          z
+            .record(z.string(), z.unknown())
+            .describe('Output key/value map. Sensitive values are masked.'),
       },
     },
     async handler(ctx) {

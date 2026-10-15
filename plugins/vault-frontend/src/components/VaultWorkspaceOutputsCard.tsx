@@ -68,8 +68,8 @@ export function VaultWorkspaceOutputsCard() {
       {outputs.length === 0 ? (
         <Typography variant="body2" className={classes.empty}>
           No non-sensitive outputs are available yet. The workspace may not have
-          been applied, or every output is marked sensitive (sensitive values are
-          never exposed here).
+          been applied, or every output is marked sensitive (sensitive values
+          are never exposed here).
         </Typography>
       ) : (
         <Table size="small">

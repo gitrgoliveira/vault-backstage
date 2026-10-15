@@ -26,7 +26,9 @@ export const MODULE_LAYER: Record<string, string> = {
  * the Vault self-service suite, so unrelated no-code workspaces are skipped.
  */
 export function layerForModule(moduleName: string): string | undefined {
-  return MODULE_LAYER[moduleName] ?? MODULE_LAYER[`terraform-vault-${moduleName}`];
+  return (
+    MODULE_LAYER[moduleName] ?? MODULE_LAYER[`terraform-vault-${moduleName}`]
+  );
 }
 
 /**

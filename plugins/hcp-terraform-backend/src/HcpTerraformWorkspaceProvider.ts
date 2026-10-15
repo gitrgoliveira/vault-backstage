@@ -2,10 +2,7 @@ import {
   EntityProvider,
   EntityProviderConnection,
 } from '@backstage/plugin-catalog-node';
-import {
-  LoggerService,
-  SchedulerService,
-} from '@backstage/backend-plugin-api';
+import { LoggerService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { HcpTfClient } from './HcpTfClient';
 import { canonicalModuleName, layerForModule } from './moduleLayer';
@@ -21,7 +18,9 @@ function layerToSystem(layer: string): string {
 }
 
 /** Extracts module name from source-module-id like private/org/module-name/vault/1.0.0. */
-export function moduleNameFromSourceId(sourceModuleId: string | null): string | null {
+export function moduleNameFromSourceId(
+  sourceModuleId: string | null,
+): string | null {
   if (!sourceModuleId) return null;
   const parts = sourceModuleId.split('/');
   // format: private/<org>/<module-name>/<provider>/<version>
@@ -55,7 +54,8 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
     return new HcpTerraformWorkspaceProvider(
       opts.client,
       cfg.getString('organization'),
-      cfg.getOptionalConfig('projects')?.getOptionalString('tenantTagKey') ?? 'tenant',
+      cfg.getOptionalConfig('projects')?.getOptionalString('tenantTagKey') ??
+        'tenant',
       opts.logger,
       opts.scheduler,
     );
@@ -79,7 +79,9 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
 
   async refresh(): Promise<void> {
     if (!this.connection) {
-      this.logger.warn('HcpTerraformWorkspaceProvider: no catalog connection yet');
+      this.logger.warn(
+        'HcpTerraformWorkspaceProvider: no catalog connection yet',
+      );
       return;
     }
     this.logger.info('HcpTerraformWorkspaceProvider: refreshing workspaces');
@@ -121,106 +123,118 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
     const targetByProject = new Map(targets.map(t => [t.projectId, t]));
 
     const entities = await Promise.all(
-      workspaces
-        .map(async ws => {
-          const moduleName = moduleNameFromSourceId(ws.sourceModuleId);
-          const layer = moduleName ? layerForModule(moduleName) : undefined;
-          // Only ingest workspaces created from a Vault self-service module.
-          // Other no-code modules (e.g. rds, vpc) have a source-module-id but no
-          // matching layer, so they are skipped to keep the catalog Vault-only.
-          if (!moduleName || !layer) return null;
-          // Also require the workspace to live in a Product:Vault-tagged project
-          // (when such projects exist), so stray Vault-module workspaces sitting
-          // in unrelated projects are excluded.
-          if (vaultProjectIds && !(ws.projectId && vaultProjectIds.has(ws.projectId))) {
-            return null;
-          }
-          const system = layerToSystem(layer);
-          const target = ws.projectId ? targetByProject.get(ws.projectId) : undefined;
-          const tenant =
-            target?.tenant ??
-            ws.tagNames.find(t => t.startsWith(`${this.tenantTagKey}:`))?.split(':')[1] ??
-            'unknown';
-          // Parent workspace (previous layer) recorded at provision time as a
-          // `parent:<name>` tag; drives the catalog-graph L1 -> L2 -> L3 chain.
-          const parentName = ws.tagNames
-            .find(t => t.startsWith('parent:'))
-            ?.slice('parent:'.length);
+      workspaces.map(async ws => {
+        const moduleName = moduleNameFromSourceId(ws.sourceModuleId);
+        const layer = moduleName ? layerForModule(moduleName) : undefined;
+        // Only ingest workspaces created from a Vault self-service module.
+        // Other no-code modules (e.g. rds, vpc) have a source-module-id but no
+        // matching layer, so they are skipped to keep the catalog Vault-only.
+        if (!moduleName || !layer) return null;
+        // Also require the workspace to live in a Product:Vault-tagged project
+        // (when such projects exist), so stray Vault-module workspaces sitting
+        // in unrelated projects are excluded.
+        if (
+          vaultProjectIds &&
+          !(ws.projectId && vaultProjectIds.has(ws.projectId))
+        ) {
+          return null;
+        }
+        const system = layerToSystem(layer);
+        const target = ws.projectId
+          ? targetByProject.get(ws.projectId)
+          : undefined;
+        const tenant =
+          target?.tenant ??
+          ws.tagNames
+            .find(t => t.startsWith(`${this.tenantTagKey}:`))
+            ?.split(':')[1] ??
+          'unknown';
+        // Parent workspace (previous layer) recorded at provision time as a
+        // `parent:<name>` tag; drives the catalog-graph L1 -> L2 -> L3 chain.
+        const parentName = ws.tagNames
+          .find(t => t.startsWith('parent:'))
+          ?.slice('parent:'.length);
 
-          // Fetch outputs and add as annotations (non-sensitive only).
-          // Cached by state-version id; no API call for unchanged/never-applied ws.
-          const outputAnnotations: Record<string, string> = {};
-          try {
-            const outputs = await this.client.readOutputsCached(
-              ws.id,
-              ws.currentStateVersionId,
-            );
-            for (const o of outputs) {
-              if (!o.sensitive) {
-                outputAnnotations[`hcptf.io/output.${o.key}`] = String(o.value ?? '');
-              }
+        // Fetch outputs and add as annotations (non-sensitive only).
+        // Cached by state-version id; no API call for unchanged/never-applied ws.
+        const outputAnnotations: Record<string, string> = {};
+        try {
+          const outputs = await this.client.readOutputsCached(
+            ws.id,
+            ws.currentStateVersionId,
+          );
+          for (const o of outputs) {
+            if (!o.sensitive) {
+              outputAnnotations[`hcptf.io/output.${o.key}`] = String(
+                o.value ?? '',
+              );
             }
-          } catch {
-            // Outputs may not be available if workspace never applied
           }
+        } catch {
+          // Outputs may not be available if workspace never applied
+        }
 
-          // Catalog relations that drive the relations graph:
-          //  - the previous-layer workspace (L1 -> L2 -> L3 chain, from the
-          //    `parent:<name>` tag recorded at provision time);
-          //  - the onboarded tenant/env target this workspace belongs to, so
-          //    the target's graph lists every workspace provisioned into it.
-          // Both use dependsOn (the target gets the reciprocal dependencyOf).
-          const dependsOn: string[] = [];
-          if (parentName && parentName !== ws.name) {
-            dependsOn.push(`resource:default/${parentName}`);
-          }
-          if (target) {
-            dependsOn.push(`resource:default/${target.tenant}-${target.env}`);
-          }
+        // Catalog relations that drive the relations graph:
+        //  - the previous-layer workspace (L1 -> L2 -> L3 chain, from the
+        //    `parent:<name>` tag recorded at provision time);
+        //  - the onboarded tenant/env target this workspace belongs to, so
+        //    the target's graph lists every workspace provisioned into it.
+        // Both use dependsOn (the target gets the reciprocal dependencyOf).
+        const dependsOn: string[] = [];
+        if (parentName && parentName !== ws.name) {
+          dependsOn.push(`resource:default/${parentName}`);
+        }
+        if (target) {
+          dependsOn.push(`resource:default/${target.tenant}-${target.env}`);
+        }
 
-          return {
-            entity: {
-              apiVersion: 'backstage.io/v1alpha1',
-              kind: 'Resource',
-              metadata: {
-                name: ws.name,
-                namespace: 'default',
-                description: target
-                  ? `${layer} workspace for ${target.tenant}/${target.env} (${canonicalModuleName(moduleName)})`
-                  : `${layer} workspace (${canonicalModuleName(moduleName)})`,
-                annotations: {
-                  'backstage.io/managed-by-location': `hcp-terraform:${this.organization}`,
-                  'backstage.io/managed-by-origin-location': `hcp-terraform:${this.organization}`,
-                  'hcptf.io/workspace-id': ws.id,
-                  'hcptf.io/workspace-url': this.client.workspaceUrl(ws.name),
-                  'hcptf.io/module-name': canonicalModuleName(moduleName),
-                  'hcptf.io/layer': layer,
-                  'hcptf.io/run-status': ws.status,
-                  ...(target
-                    ? {
-                        'hcptf.io/tenant': target.tenant,
-                        'hcptf.io/environment': target.env,
-                        'hcptf.io/target': `${target.tenant}-${target.env}`,
-                      }
-                    : {}),
-                  ...outputAnnotations,
-                },
-                tags: [layer, moduleName.replace(/^terraform-/, ''), tenant.toLowerCase()],
+        return {
+          entity: {
+            apiVersion: 'backstage.io/v1alpha1',
+            kind: 'Resource',
+            metadata: {
+              name: ws.name,
+              namespace: 'default',
+              description: target
+                ? `${layer} workspace for ${target.tenant}/${target.env} (${canonicalModuleName(moduleName)})`
+                : `${layer} workspace (${canonicalModuleName(moduleName)})`,
+              annotations: {
+                'backstage.io/managed-by-location': `hcp-terraform:${this.organization}`,
+                'backstage.io/managed-by-origin-location': `hcp-terraform:${this.organization}`,
+                'hcptf.io/workspace-id': ws.id,
+                'hcptf.io/workspace-url': this.client.workspaceUrl(ws.name),
+                'hcptf.io/module-name': canonicalModuleName(moduleName),
+                'hcptf.io/layer': layer,
+                'hcptf.io/run-status': ws.status,
+                ...(target
+                  ? {
+                      'hcptf.io/tenant': target.tenant,
+                      'hcptf.io/environment': target.env,
+                      'hcptf.io/target': `${target.tenant}-${target.env}`,
+                    }
+                  : {}),
+                ...outputAnnotations,
               },
-              spec: {
-                type: 'vault-workspace',
-                lifecycle: 'production',
-                owner: `group:default/${tenant.toLowerCase()}`,
-                system: `system:default/${system}`,
-                // Link to the previous-layer workspace and the tenant/env target
-                // so the catalog graph shows the L1 -> L2 -> L3 chain and each
-                // target lists its workspaces (dependsOn/dependencyOf relations).
-                ...(dependsOn.length > 0 ? { dependsOn } : {}),
-              },
+              tags: [
+                layer,
+                moduleName.replace(/^terraform-/, ''),
+                tenant.toLowerCase(),
+              ],
             },
-            locationKey: `hcp-terraform:${ws.id}`,
-          };
-        }),
+            spec: {
+              type: 'vault-workspace',
+              lifecycle: 'production',
+              owner: `group:default/${tenant.toLowerCase()}`,
+              system: `system:default/${system}`,
+              // Link to the previous-layer workspace and the tenant/env target
+              // so the catalog graph shows the L1 -> L2 -> L3 chain and each
+              // target lists its workspaces (dependsOn/dependencyOf relations).
+              ...(dependsOn.length > 0 ? { dependsOn } : {}),
+            },
+          },
+          locationKey: `hcp-terraform:${ws.id}`,
+        };
+      }),
     );
 
     const validEntities = entities.filter(Boolean) as {

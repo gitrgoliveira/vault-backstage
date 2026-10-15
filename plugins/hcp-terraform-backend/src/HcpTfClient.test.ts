@@ -84,7 +84,11 @@ describe('HcpTfClient pagination', () => {
     const client = makeClient();
     const mkWs = (i: number) => ({
       id: `ws-${i}`,
-      attributes: { name: `ws-${i}`, 'source-module-id': null, 'tag-names': [] },
+      attributes: {
+        name: `ws-${i}`,
+        'source-module-id': null,
+        'tag-names': [],
+      },
       relationships: {
         project: { data: { id: 'prj-1' } },
         'current-run': { data: { id: `run-${i}` } },
@@ -93,7 +97,9 @@ describe('HcpTfClient pagination', () => {
     });
     const page1 = Array.from({ length: 100 }, (_, i) => mkWs(i));
     const page2 = [mkWs(100), mkWs(101)];
-    const included2 = [{ id: 'run-101', type: 'runs', attributes: { status: 'applied' } }];
+    const included2 = [
+      { id: 'run-101', type: 'runs', attributes: { status: 'applied' } },
+    ];
     const fetchMock = mockFetchPages([page1, page2], [[], included2]);
     global.fetch = fetchMock as unknown as typeof fetch;
 
@@ -131,7 +137,10 @@ describe('HcpTfClient retry backoff', () => {
       ok: true,
       status: 200,
       headers: { get: () => null },
-      json: async () => ({ data: [], meta: { pagination: { 'next-page': null } } }),
+      json: async () => ({
+        data: [],
+        meta: { pagination: { 'next-page': null } },
+      }),
       text: async () => '',
     };
     const fetchMock = jest

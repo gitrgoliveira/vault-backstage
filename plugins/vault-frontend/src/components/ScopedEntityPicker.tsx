@@ -21,7 +21,11 @@ export type ScopedEntityPickerUiOptions = {
 };
 
 function convertOpsValue(value: unknown): string | symbol {
-  if (value && typeof value === 'object' && (value as { exists?: unknown }).exists) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    (value as { exists?: unknown }).exists
+  ) {
     return CATALOG_FILTER_EXISTS;
   }
   return String(value);
@@ -130,7 +134,9 @@ export function ScopedEntityPicker(
   );
 
   const labelFor = (ref: string): string => {
-    const entity = scoped.find(candidate => stringifyEntityRef(candidate) === ref);
+    const entity = scoped.find(
+      candidate => stringifyEntityRef(candidate) === ref,
+    );
     return entity?.metadata.title ?? ref;
   };
 

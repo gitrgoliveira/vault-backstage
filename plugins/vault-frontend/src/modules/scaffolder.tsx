@@ -8,7 +8,8 @@ const scopedEntityPickerField = FormFieldBlueprint.make({
   name: 'scoped-entity-picker',
   params: {
     field: async () => {
-      const { ScopedEntityPicker } = await import('../components/ScopedEntityPicker');
+      const { ScopedEntityPicker } =
+        await import('../components/ScopedEntityPicker');
       return createFormField({
         name: 'ScopedEntityPicker',
         component: ScopedEntityPicker,
