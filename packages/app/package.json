@@ -53,13 +53,13 @@
   },
   "devDependencies": {
     "@backstage/frontend-test-utils": "^0.6.4",
-    "@playwright/test": "^1.32.3",
-    "@testing-library/dom": "^9.0.0",
-    "@testing-library/jest-dom": "^6.0.0",
-    "@testing-library/react": "^14.0.0",
+    "@playwright/test": "^1.64.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.0.0",
     "@types/react-dom": "*",
-    "cross-env": "^7.0.0"
+    "cross-env": "^10.1.0"
   },
   "browserslist": {
     "production": [
