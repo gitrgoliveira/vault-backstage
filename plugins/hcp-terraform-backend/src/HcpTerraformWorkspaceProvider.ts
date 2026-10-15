@@ -10,6 +10,7 @@ import { canonicalModuleName, layerForModule } from './moduleLayer';
 /** Derives a Backstage system name from a workspace layer. */
 function layerToSystem(layer: string): string {
   const map: Record<string, string> = {
+    admin: 'vault-admin',
     trust: 'vault-trust',
     workload: 'vault-workload',
     usecase: 'vault-usecase',
@@ -104,6 +105,11 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
       const projects = await this.client.listVaultProjects();
       if (projects.length > 0) {
         vaultProjectIds = new Set(projects.map(p => p.id));
+        // The admin project holds the L0 tenant-onboarding workspaces but is
+        // not tagged Product:Vault (the bootstrap creates it untagged), so
+        // admit it explicitly or L0 drops out once any tenant project exists.
+        const adminProjectId = await this.client.findAdminProjectId();
+        if (adminProjectId) vaultProjectIds.add(adminProjectId);
         this.logger.info(
           `HcpTerraformWorkspaceProvider: gating ingestion to ${vaultProjectIds.size} ` +
             `Product:Vault-tagged project(s)`,

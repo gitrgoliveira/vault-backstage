@@ -3,7 +3,7 @@
 # Values here override app-config.yaml at development time.
 
 hcpTerraform:
-  organization: my-hcp-terraform-org
+  organization: ${HCP_TF_ORGANIZATION}
   token: ${HCP_TF_TOKEN}
   # Uncomment and populate the nocode-xxx IDs once modules are enabled in HCP TF:
   # moduleMap:

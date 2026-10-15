@@ -28,7 +28,7 @@ Environment-specific values (`VAULT_ADDRESS`, `VAULT_NAMESPACE`) and Kubernetes 
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.5.0`). Click **Provision workspace** on the module, pick a project and workspace name, then complete the form.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.5.1`). Click **Provision workspace** on the module, pick a project and workspace name, then complete the form.
 
 Form fields:
 
@@ -44,7 +44,7 @@ Form fields:
 ```hcl
 module "add_kvv2" {
   source  = "app.terraform.io/<org>/add-kvv2/vault"
-  version = "~> 0.5.0"
+  version = "~> 0.5.1"
 
   cluster_name  = "ocp-prod-eu"
   usecase_name  = "app-config"
@@ -58,7 +58,7 @@ instance name as `cluster_name`:
 ```hcl
 module "add_kvv2_gitlab" {
   source  = "app.terraform.io/<org>/add-kvv2/vault"
-  version = "~> 0.5.0"
+  version = "~> 0.5.1"
 
   cluster_name     = "cloud" # the gitlab_instance_name used by the trust module
   usecase_name     = "app-config"
@@ -79,6 +79,7 @@ resources:
 # --- Vault Agent Injector pod annotations ---
 vault.hashicorp.com/agent-inject: "true"
 vault.hashicorp.com/role: "ocp-prod-eu-payments"
+vault.hashicorp.com/auth-type: "jwt"
 vault.hashicorp.com/auth-path: "auth/jwt/ocp-prod-eu"
 ...
 

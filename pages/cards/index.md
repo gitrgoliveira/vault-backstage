@@ -25,4 +25,18 @@ Every card follows the same pattern:
 6. Links to the workspace and run are returned
 
 !!! info "Entity Pickers"
-    Cards at L1 and above include **Entity Picker** fields that list only the relevant upstream entities. For example, the Trust card shows only `vault-target` Resources created by the Admin card. If the picker is empty, you need to run the upstream template first.
+    Cards at L1 and above include **Entity Picker** fields that list only the relevant upstream entities. For example, the Trust card shows only `vault-target` Resources created by the Admin card. If the picker is empty, check three things: the upstream template has run, its HCP Terraform run applied successfully (pickers only list workspaces whose outputs exist), and the catalog has refreshed since, which takes up to 5 minutes.
+
+## If a run fails
+
+The scaffolder creates the HCP Terraform workspace first, then waits up to 20 minutes for the run. If the run errors, is canceled or discarded, or the wait times out, the task fails and the workspace stays in HCP Terraform:
+
+- Open the task log: the error includes the run URL, and the workspace is listed in HCP Terraform under the tenant project.
+- Fix the cause in HCP Terraform and start a new run there, or delete the workspace before you run the card again with the same Workspace Name, which would otherwise collide with it.
+- After a timeout, check the run in HCP Terraform before you retry; it may still apply.
+
+## Limitations
+
+- **Create only.** The cards create workspaces; none of them changes or destroys one. Change inputs or destroy in HCP Terraform, and destroy from the top layer down (L3, then L2, L1, L0), because each layer depends on the one below it.
+- **Deleting a catalog entity does not delete the workspace.** The provider recreates the entity on its next refresh while the workspace exists.
+- **The audience column is a convention.** The reference permission policy does not stop other users from running the Admin card; refer to [Add authentication gates](../integration/templates.md#add-authentication-gates) to restrict it.

@@ -64,11 +64,11 @@ describe('nextLayerLink', () => {
     ).toEqual({ kind: 'not-applied', label: 'Create Workload (Layer 2)' });
   });
 
-  it('offers nothing for trusts the workload pickers do not accept', () => {
+  it('offers nothing for the L0 tenant-onboarding workspace', () => {
     expect(
       nextLayerLink(
         workspace('tenants', {
-          'hcptf.io/layer': 'trust',
+          'hcptf.io/layer': 'admin',
           'hcptf.io/module-name': 'terraform-vault-hcptf-onboarding',
         }),
       ),

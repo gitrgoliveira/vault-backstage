@@ -18,7 +18,7 @@ Use-case root configuration.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.2.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `pg_connection_url`, `pg_username`, and `pg_password` are sensitive.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.2.1`). Click **Provision workspace**, pick a project and workspace name, then complete the form. `pg_connection_url`, `pg_username`, and `pg_password` are sensitive.
 
 Form fields:
 
@@ -36,8 +36,8 @@ Form fields:
 
 ```hcl
 module "onboard_pgsql_connection" {
-  source  = "app.terraform.io/<org>/onboard-pgsql-connection/vault"
-  version = "~> 0.2.0"
+  source  = "app.terraform.io/<org>/pgsql-onboarding/vault"
+  version = "~> 0.2.1"
 
   cluster_name      = "ocp-prod-eu"
   db_name           = "payments-db"

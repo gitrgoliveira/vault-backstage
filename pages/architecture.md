@@ -37,7 +37,7 @@ The portal maps these layers to Backstage catalog entities:
 | Backstage kind | Entity type | Maps to |
 |----------------|-------------|---------|
 | `Domain` | `vault-self-service` | The overall platform |
-| `System` | `vault-trust`, `vault-workload`, `vault-usecase` | One per layer (L1–L3) |
+| `System` | `vault-admin`, `vault-trust`, `vault-workload`, `vault-usecase` | One per layer (L0–L3) |
 | `Component` | `terraform-module` | Each Terraform module |
 | `Resource` | `vault-target` | Per-tenant/environment target created by L0 |
 | `Resource` | `vault-workspace` | Each HCP Terraform workspace created by templates |
@@ -58,7 +58,7 @@ HCP Terraform creates workspace + applies no-code module
 Vault resources provisioned (auth backends, entities, policies, mounts)
         │
         ▼
-Backstage catalog updated with new Resource entity
+Catalog provider ingests the workspace on its next refresh (≤ 5 min)
 ```
 
 ## Integration points

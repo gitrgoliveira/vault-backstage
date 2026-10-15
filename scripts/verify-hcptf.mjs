@@ -145,4 +145,5 @@ for (const name of [...moduleNames].sort()) {
 console.log(
   `\n${okCount}/${moduleNames.size} modules ready for no-code provisioning.`,
 );
-if (okCount === 0) process.exit(1);
+// Any unresolved module fails its template at run time, so fail the preflight.
+if (okCount !== moduleNames.size) process.exit(1);

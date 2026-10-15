@@ -20,7 +20,7 @@ Use-case.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.4.0`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Connection outputs come from `pgsql-onboarding`; the workload module must be applied first so the entity can be discovered.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.4.1`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Connection outputs come from `pgsql-onboarding`; the workload module must be applied first so the entity can be discovered.
 
 Form fields:
 
@@ -38,7 +38,7 @@ Form fields:
 ```hcl
 module "add_pgsql_role" {
   source  = "app.terraform.io/<org>/add-pgsql-role/vault"
-  version = "~> 0.4.0"
+  version = "~> 0.4.1"
 
   cluster_name       = "ocp-prod-eu"
   workload_name      = "payments"
@@ -67,12 +67,25 @@ vault.hashicorp.com/agent-inject-secret-db.json: "db/ocp-prod-eu/payments-db/sta
 
 ```yaml
 apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: payments-orders-db-auth
+  namespace: <K8S_NAMESPACE>
+spec:
+  method: jwt
+  mount: jwt/ocp-prod-eu
+  namespace: <VAULT_NAMESPACE>
+  jwt:
+    role: ocp-prod-eu-payments
+    serviceAccount: <K8S_SERVICE_ACCOUNT>
+---
+apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultDynamicSecret
 metadata:
   name: payments-orders-db
   namespace: <K8S_NAMESPACE>
 spec:
-  vaultAuthRef: ocp-prod-eu-payments
+  vaultAuthRef: payments-orders-db-auth
   mount: db/ocp-prod-eu/payments-db
   path: static-creds/ocp-prod-eu-payments-orders-db-pg
   destination:

@@ -62,7 +62,7 @@ The `nocode-...` IDs in the module resolution lines are the values for the optio
 | `GET /api/v2/... -> 401` | The token is invalid, expired, or not a team token. | Generate a new team token with workspace, project, variable set, and no-code module permissions, as listed in [Prerequisites](index.md#prerequisites). |
 | `✖ <module>: no enabled Vault no-code module matched (tried: ...)` | The module is not published, no-code provisioning is not enabled on it, or the registry name does not match any tried variant. | Revisit [Publish each module](terraform-modules.md#2-publish-each-module): confirm the module appears in the private registry and has **No-code provisioning** enabled. |
 
-The script exits with a non-zero status when no modules resolve, so you can use it as a CI gate.
+The script exits with a non-zero status when any module fails to resolve, so you can use it as a CI gate.
 
 ## Check your app-config.yaml
 
@@ -126,7 +126,7 @@ The integration steps add configuration in three places: the `hcpTerraform` bloc
 
 With the preflight green, restart your Backstage backend and walk the portal:
 
-- [ ] **Catalog structure**: the catalog shows the `vault-self-service` domain and the `vault-trust`, `vault-workload`, and `vault-usecase` systems.
+- [ ] **Catalog structure**: the catalog shows the `vault-self-service` domain and the `vault-admin`, `vault-trust`, `vault-workload`, and `vault-usecase` systems.
 - [ ] **Module components**: the nine `terraform-module` components appear, each linking to its TechDocs page.
 - [ ] **Templates**: the Create page lists the four templates (L0 admin onboarding through L3 use case).
 - [ ] **Provider sync**: after the first L0 run, `vault-target` resources appear within one refresh cycle (5 minutes), and the L1 template's Entity Picker offers them.

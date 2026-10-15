@@ -22,7 +22,7 @@ describe('layerForModule', () => {
     // Regression: HCP's source-module-id yields the short name; the MODULE_LAYER
     // keys are the long "terraform-vault-*" names. Both must resolve.
     expect(layerForModule('gitlab-onboarding')).toBe('trust');
-    expect(layerForModule('hcptf-onboarding')).toBe('trust');
+    expect(layerForModule('hcptf-onboarding')).toBe('admin');
     expect(layerForModule('add-gitlab-project-access')).toBe('workload');
     expect(layerForModule('add-kvv2')).toBe('usecase');
   });

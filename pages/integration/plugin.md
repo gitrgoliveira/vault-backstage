@@ -167,6 +167,6 @@ return { result: AuthorizeResult.ALLOW };
 
 ## Verify
 
-After configuring the backend plugin, restart your Backstage backend and run the read-only preflight script — `make verify-hcptf` in the reference portal clone. It validates your token, resolves all no-code module IDs, and confirms the admin project exists. [Verify the integration](verify.md) explains how to run the script in your own instance and shows sample output and failure signatures.
+After configuring the backend plugin, restart your Backstage backend and run the read-only preflight script — `make verify-hcptf` in the reference portal clone. It validates your token and organization, lists the `Product=Vault` projects, and resolves the no-code module ID of every module the reference templates use. [Verify the integration](verify.md) explains how to run the script in your own instance and shows sample output and failure signatures.
 
 With the backend green, proceed to the [frontend plugin](plugin-frontend.md) installation.

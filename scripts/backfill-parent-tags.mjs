@@ -239,7 +239,8 @@ function inferParent(child, peers) {
 const actions = [];
 for (const [pid, peers] of byProject) {
   for (const child of peers) {
-    if (child.layer === 'trust') continue;
+    // L0 and L1 workspaces are roots of the chain; they have no parent.
+    if (child.layer === 'admin' || child.layer === 'trust') continue;
     if (child.parentTag) {
       actions.push({
         child,
