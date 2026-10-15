@@ -73,7 +73,7 @@ The scaffolder module registers these actions:
 
 The catalog module registers the `HcpTerraformWorkspaceProvider`, which refreshes every 5 minutes and emits:
 
-- **`vault-workspace`** resources for every workspace created from a known Vault module (filtered to `Product:Vault`-tagged projects plus the admin project, which holds the L0 workspaces)
+- **`vault-workspace`** resources for every workspace created from a known Vault module (filtered to `Product:Vault`-tagged projects, plus the L0 workspaces in the admin project)
 - **`vault-target`** resources for each tenant and environment pair discovered from L0 onboarding outputs
 
 ## Configure `app-config.yaml`

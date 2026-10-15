@@ -237,6 +237,39 @@ describe('HcpTfClient list caches', () => {
     expect(projects.map(p => p.id)).toEqual(['prj-a']);
   });
 
+  it('rejects when the first project listing fails, so the gate is not lifted on []', async () => {
+    const client = makeClient();
+    jest
+      .spyOn(client as any, 'requestAllPages')
+      .mockRejectedValueOnce(new Error('503'));
+
+    await expect(client.listVaultProjects()).rejects.toThrow('503');
+  });
+
+  it('keeps serving the last good module list when a refetch fails', async () => {
+    const client = makeClient();
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000);
+    jest
+      .spyOn(client as any, 'requestAllPages')
+      .mockResolvedValueOnce({
+        data: [
+          {
+            attributes: { name: 'add-kvv2', 'no-code': true },
+            relationships: {
+              'no-code-modules': { data: [{ id: 'nocode-1' }] },
+            },
+          },
+        ],
+        included: [],
+      })
+      .mockRejectedValueOnce(new Error('503'));
+
+    await client.listVaultNoCodeModules();
+    now.mockReturnValue(1_000 + LIST_CACHE_TTL_MS);
+    const modules = await client.listVaultNoCodeModules();
+    expect(modules.map(m => m.nocodeId)).toEqual(['nocode-1']);
+  });
+
   it('findAdminProjectId returns undefined when the admin project does not exist', async () => {
     const client = makeClient();
     jest

@@ -68,7 +68,7 @@ In addition to the static catalog entities above, the [HCP Terraform catalog pro
 | Resource type | Created when | Annotations |
 |---------------|-------------|-------------|
 | `vault-target` | A tenant is onboarded (L0) | `hcptf.io/tenant`, `hcptf.io/environment`, `hcptf.io/project-id` |
-| `vault-workspace` | A workspace of one of the nine modules exists in a `Product=Vault` project or the admin project (when no project carries the tag, in any project) | `hcptf.io/workspace-id`, `hcptf.io/workspace-url`, `hcptf.io/module-name`, `hcptf.io/layer`, `hcptf.io/run-status`, plus `hcptf.io/output.<key>` for each non-sensitive output. Workspaces in an onboarded tenant project also get `hcptf.io/tenant`, `hcptf.io/environment`, and `hcptf.io/target` (`<tenant>-<env>`), which the pickers scope on. |
+| `vault-workspace` | A workspace of one of the nine modules exists in a `Product=Vault` project, or is an L0 workspace in the admin project (when no project carries the tag, in any project) | `hcptf.io/workspace-id`, `hcptf.io/workspace-url`, `hcptf.io/module-name`, `hcptf.io/layer`, `hcptf.io/run-status`, plus `hcptf.io/output.<key>` for each non-sensitive output. Workspaces in an onboarded tenant project also get `hcptf.io/tenant`, `hcptf.io/environment`, and `hcptf.io/target` (`<tenant>-<env>`), which the pickers scope on. |
 
 These resources appear in Entity Picker fields in the L1 through L3 templates. The provider refreshes every 5 minutes.
 

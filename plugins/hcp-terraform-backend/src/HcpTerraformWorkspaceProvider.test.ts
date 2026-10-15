@@ -102,14 +102,19 @@ describe('HcpTerraformWorkspaceProvider.refresh project gate', () => {
     currentStateVersionId: null,
   });
 
-  async function emittedWorkspaces(workspaces: WorkspaceSummary[]) {
+  async function emittedWorkspaces(
+    workspaces: WorkspaceSummary[],
+    {
+      taggedProjects = [{ id: 'prj-tenant', name: 'acme-Vault-dev' }],
+      adminProjectId = 'prj-admin' as string | null,
+      discover = jest.fn(async () => []),
+    } = {},
+  ) {
     const client = {
       listWorkspaces: async () => workspaces,
-      listVaultProjects: async () => [
-        { id: 'prj-tenant', name: 'acme-Vault-dev' },
-      ],
-      findAdminProjectId: async () => 'prj-admin',
-      discoverOnboardedTargets: async () => [],
+      listVaultProjects: async () => taggedProjects,
+      findAdminProjectId: async () => adminProjectId ?? undefined,
+      discoverOnboardedTargets: discover,
       readOutputsCached: async () => [],
       workspaceUrl: (n: string) => `https://app.terraform.io/ws/${n}`,
     } as unknown as HcpTfClient;
@@ -148,5 +153,36 @@ describe('HcpTerraformWorkspaceProvider.refresh project gate', () => {
       ])
     ).map((e: any) => e.metadata.name);
     expect(names).toEqual(['trust-ok']);
+  });
+
+  it('discovers tenants from the resolved admin project', async () => {
+    const discover = jest.fn(async () => []);
+    await emittedWorkspaces([], { discover });
+    expect(discover).toHaveBeenCalledWith('prj-admin');
+  });
+
+  it('skips discovery and L0 admission when the admin project cannot be resolved', async () => {
+    const discover = jest.fn(async () => []);
+    const emitted = await emittedWorkspaces(
+      [ws('acme-onboarding', 'hcptf-onboarding', 'prj-admin')],
+      { adminProjectId: null, discover },
+    );
+    expect(discover).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  it('ingests by module only when no project carries the tag', async () => {
+    const emitted = await emittedWorkspaces(
+      [
+        ws('acme-onboarding', 'hcptf-onboarding', 'prj-admin'),
+        ws('trust-anywhere', 'cluster-onboarding', 'prj-other'),
+      ],
+      { taggedProjects: [] },
+    );
+    expect(emitted.map((e: any) => e.metadata.name)).toEqual([
+      'acme-onboarding',
+      'trust-anywhere',
+    ]);
+    expect(emitted[0].spec.owner).toBe('group:default/vault-platform');
   });
 });
