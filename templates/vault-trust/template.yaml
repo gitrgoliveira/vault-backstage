@@ -60,16 +60,12 @@ spec:
                   title: JWT Issuer URL
                   type: string
                   description: >-
-                    The cluster's OIDC issuer URL (kube-apiserver
-                    --service-account-issuer). Must use https:// and be
-                    reachable from Vault.
+                    The cluster's service-account issuer (kube-apiserver
+                    --service-account-issuer), exactly as it appears in its
+                    tokens. Vault reads the issuer's OIDC discovery document, so
+                    it must use https:// and be reachable from Vault without
+                    authentication.
                   pattern: "^https://"
-                oidcDiscoveryUrl:
-                  title: OIDC Discovery URL (optional)
-                  type: string
-                  description: >-
-                    Leave blank to use the JWT Issuer URL. Set it only if the
-                    OIDC discovery endpoint differs from the issuer.
             - required: [gitlabInstanceName, oidcDiscoveryUrl]
               properties:
                 trustType:
@@ -103,8 +99,9 @@ spec:
         vars:
           cluster_name: ${{ parameters.clusterName }}
           jwt_issuer: ${{ parameters.jwtIssuer }}
-          # The module needs exactly one key source; default discovery to the issuer.
-          oidc_discovery_url: ${{ parameters.oidcDiscoveryUrl or parameters.jwtIssuer }}
+          # Vault requires the discovery document's issuer to equal the
+          # discovery URL, so the issuer is the only valid value.
+          oidc_discovery_url: ${{ parameters.jwtIssuer }}
 
     - id: gitlab
       name: Provision GitLab trust

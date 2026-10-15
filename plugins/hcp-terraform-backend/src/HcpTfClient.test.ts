@@ -237,7 +237,7 @@ describe('HcpTfClient list caches', () => {
     expect(projects.map(p => p.id)).toEqual(['prj-a']);
   });
 
-  it('rejects when the first project listing fails, so the gate is not lifted on []', async () => {
+  it('rejects when the first project listing fails instead of returning []', async () => {
     const client = makeClient();
     jest
       .spyOn(client as any, 'requestAllPages')

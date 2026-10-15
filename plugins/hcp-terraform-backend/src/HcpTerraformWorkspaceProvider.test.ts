@@ -108,6 +108,7 @@ describe('HcpTerraformWorkspaceProvider.refresh project gate', () => {
       taggedProjects = [{ id: 'prj-tenant', name: 'acme-Vault-dev' }],
       adminProjectId = 'prj-admin' as string | null,
       discover = jest.fn(async () => []),
+      outputs = [] as { key: string; value: unknown; sensitive: boolean }[],
     } = {},
   ) {
     const client = {
@@ -115,7 +116,7 @@ describe('HcpTerraformWorkspaceProvider.refresh project gate', () => {
       listVaultProjects: async () => taggedProjects,
       findAdminProjectId: async () => adminProjectId ?? undefined,
       discoverOnboardedTargets: discover,
-      readOutputsCached: async () => [],
+      readOutputsCached: async () => outputs,
       workspaceUrl: (n: string) => `https://app.terraform.io/ws/${n}`,
     } as unknown as HcpTfClient;
     const provider = new HcpTerraformWorkspaceProvider(
@@ -184,5 +185,23 @@ describe('HcpTerraformWorkspaceProvider.refresh project gate', () => {
       'trust-anywhere',
     ]);
     expect(emitted[0].spec.owner).toBe('group:default/vault-platform');
+  });
+
+  it('renders map outputs as JSON instead of [object Object]', async () => {
+    const [l0] = await emittedWorkspaces(
+      [ws('acme-onboarding', 'hcptf-onboarding', 'prj-admin')],
+      {
+        outputs: [
+          { key: 'project_ids', value: { dev: 'prj-1' }, sensitive: false },
+          { key: 'admin_token', value: 'x', sensitive: true },
+        ],
+      },
+    );
+    expect(l0.metadata.annotations['hcptf.io/output.project_ids']).toBe(
+      '{"dev":"prj-1"}',
+    );
+    expect(
+      l0.metadata.annotations['hcptf.io/output.admin_token'],
+    ).toBeUndefined();
   });
 });

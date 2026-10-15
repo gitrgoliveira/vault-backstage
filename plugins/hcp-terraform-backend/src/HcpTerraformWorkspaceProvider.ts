@@ -175,9 +175,12 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
           );
           for (const o of outputs) {
             if (!o.sensitive) {
-              outputAnnotations[`hcptf.io/output.${o.key}`] = String(
-                o.value ?? '',
-              );
+              // Map and list outputs (the L0 module's are maps) would
+              // otherwise render as "[object Object]".
+              outputAnnotations[`hcptf.io/output.${o.key}`] =
+                typeof o.value === 'object' && o.value !== null
+                  ? JSON.stringify(o.value)
+                  : String(o.value ?? '');
             }
           }
         } catch {
