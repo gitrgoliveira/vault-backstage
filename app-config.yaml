@@ -16,6 +16,48 @@ app:
     - catalog-filter:catalog/list:
         config:
           initialFilter: all
+    # Home page at /home (the catalog stays the landing page). Starred
+    # entities are stored through the user-settings backend.
+    - home-page-widget:home/toolkit:
+        config:
+          tools:
+            - url: /docs
+              label: Module docs
+              icon: docs
+            - url: /create
+              label: Onboarding templates
+              icon: kind:template
+            - url: https://developer.hashicorp.com/vault/docs
+              label: Vault docs
+              icon: docs
+            - url: https://developer.hashicorp.com/terraform/cloud-docs/no-code-provisioning
+              label: HCP Terraform no-code
+              icon: docs
+    - page:home:
+        config:
+          defaultConfig:
+            - component: HomePageSearchBar
+              column: 0
+              row: 0
+              width: 12
+              height: 2
+              deletable: false
+            # Widths fit the grid's narrowest desktop breakpoint (10 columns).
+            - component: GettingStarted
+              column: 0
+              row: 2
+              width: 5
+              height: 10
+            - component: HomePageStarredEntities
+              column: 5
+              row: 2
+              width: 5
+              height: 5
+            - component: HomePageToolkit
+              column: 5
+              row: 7
+              width: 5
+              height: 5
 
 organization:
   name: Vault Self-Service Portal

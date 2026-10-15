@@ -46,6 +46,7 @@
     "@backstage/plugin-search-backend-node": "^1.4.8",
     "@backstage/plugin-signals-backend": "^0.3.19",
     "@backstage/plugin-techdocs-backend": "^2.3.0",
+    "@backstage/plugin-user-settings-backend": "^0.4.7",
     "@gitrgoliveira/plugin-hcp-terraform-backend": "workspace:plugins/hcp-terraform-backend",
     "app": "link:../app",
     "better-sqlite3": "^13.0.3",

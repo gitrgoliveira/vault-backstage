@@ -6,12 +6,14 @@ import {
   vaultScaffolderModule,
 } from '@gitrgoliveira/plugin-vault-frontend';
 import { navModule } from './modules/nav';
+import { homeModule } from './modules/home';
 
 export default createApp({
   features: [
     catalogPlugin,
     catalogGraphPlugin,
     navModule,
+    homeModule,
     vaultCatalogModule,
     vaultScaffolderModule,
   ],
