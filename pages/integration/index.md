@@ -2,6 +2,8 @@
 
 This section explains how to adopt the Vault self-service components in your own Backstage instance: the two plugins install from GitHub Packages, and you copy the templates and catalog files from the reference portal into your app. If you do not already run Backstage, you do not need this section — the reference portal is a complete Backstage app, so fork it and follow [Getting started](../getting-started.md) instead.
 
+The plugins track Backstage releases: version 0.2.x is built against Backstage 1.55 and 0.1.x against 1.52. Upgrade your app with `yarn backstage-cli versions:bump` before installing a plugin built for a newer release, so the app and the plugins share one copy of each `@backstage/*` package.
+
 Everything you install serves the portal's 4-layer onboarding model: L0 bootstraps a tenant, L1 establishes trust, L2 onboards workload identities, and L3 grants use-case access. The five components divide the work:
 
 ```mermaid

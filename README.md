@@ -67,6 +67,7 @@ This repository is a complete Backstage app, so the simplest path — if you do 
 > **Prerequisites / caveats (verify before you start):**
 > - Your app must use the **new Backstage frontend system** (`@backstage/frontend-defaults`, `createApp({ features: [...] })`) — the frontend modules below register that way and will not load in a legacy `createApp`/`App.tsx` route setup.
 > - Both reusable plugins are published to GitHub Packages under the `@gitrgoliveira` scope. They can be installed with `yarn add`, or consumed directly as workspace packages (copy the directory and wire in `package.json`). GitHub Packages requires a personal access token with `read:packages` even for public packages — the [integration guide](https://gitrgoliveira.github.io/vault-backstage/integration/plugin/) shows the registry setup for Yarn 4 and npm.
+> - Match your Backstage release to the plugin version: 0.2.x is built against Backstage 1.55 (`@backstage/frontend-plugin-api` ^0.18) and 0.1.x against 1.52. Upgrade an older host with `yarn backstage-cli versions:bump` before installing, so the app and the plugins share one copy of each `@backstage/*` package.
 > - The [nine no-code modules](#required-terraform-module-repositories) must already be published to *your* HCP Terraform organization's private registry.
 
 **1. Backend plugin.**

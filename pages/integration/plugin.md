@@ -7,6 +7,8 @@ The `@gitrgoliveira/plugin-hcp-terraform-backend` package provides two backend m
 
 ## Install the plugin
 
+Version 0.2.x of the plugin is built against Backstage 1.55; refer to the [integration overview](index.md) for the version mapping.
+
 The plugin is published to [GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry) as `@gitrgoliveira/plugin-hcp-terraform-backend`. GitHub Packages requires authentication even for public packages: create a [personal access token (classic)](https://github.com/settings/tokens) with the `read:packages` scope, then point the `@gitrgoliveira` scope at the registry and install.
 
 === "Yarn 4 (Backstage default)"
