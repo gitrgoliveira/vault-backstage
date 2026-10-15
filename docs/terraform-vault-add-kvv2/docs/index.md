@@ -28,7 +28,7 @@ Environment-specific values (`VAULT_ADDRESS`, `VAULT_NAMESPACE`) and Kubernetes 
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.5.1`). Click **Provision workspace** on the module, pick a project and workspace name, then complete the form.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.5.2`). Click **Provision workspace** on the module, pick a project and workspace name, then complete the form.
 
 Form fields:
 
@@ -44,7 +44,7 @@ Form fields:
 ```hcl
 module "add_kvv2" {
   source  = "app.terraform.io/<org>/add-kvv2/vault"
-  version = "~> 0.5.1"
+  version = "~> 0.5.2"
 
   cluster_name  = "ocp-prod-eu"
   usecase_name  = "app-config"
@@ -58,7 +58,7 @@ instance name as `cluster_name`:
 ```hcl
 module "add_kvv2_gitlab" {
   source  = "app.terraform.io/<org>/add-kvv2/vault"
-  version = "~> 0.5.1"
+  version = "~> 0.5.2"
 
   cluster_name     = "cloud" # the gitlab_instance_name used by the trust module
   usecase_name     = "app-config"
@@ -77,19 +77,56 @@ resources:
 
 ```yaml
 # --- Vault Agent Injector pod annotations ---
+# JWT auth reads a projected ServiceAccount token with audience "vault" (the
+# workload role's bound_audience). Add this volume to the pod spec:
+#   volumes:
+#     - name: vault-token
+#       projected:
+#         sources:
+#           - serviceAccountToken:
+#               path: token
+#               audience: vault
 vault.hashicorp.com/agent-inject: "true"
 vault.hashicorp.com/role: "ocp-prod-eu-payments"
 vault.hashicorp.com/auth-type: "jwt"
 vault.hashicorp.com/auth-path: "auth/jwt/ocp-prod-eu"
-...
+vault.hashicorp.com/agent-service-account-token-volume-name: "vault-token"
+vault.hashicorp.com/auth-config-path: "/var/run/secrets/vault.hashicorp.com/serviceaccount/token"
+vault.hashicorp.com/auth-config-remove-jwt-after-reading: "false"
+vault.hashicorp.com/service: "<VAULT_ADDRESS>"
+vault.hashicorp.com/namespace: "<VAULT_NAMESPACE>"
+vault.hashicorp.com/agent-inject-secret-app-config.json: "kv/ocp-prod-eu/payments/app-config/data/app"
 
 # --- Vault Secrets Operator (VSO) custom resources ---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: payments-app-config-auth
+  namespace: <K8S_NAMESPACE>
+spec:
+  method: jwt
+  mount: jwt/ocp-prod-eu
+  namespace: <VAULT_NAMESPACE>
+  jwt:
+    role: ocp-prod-eu-payments
+    serviceAccount: <K8S_SERVICE_ACCOUNT>
+    audiences:
+      - vault
+---
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
 metadata:
   name: payments-app-config
   namespace: <K8S_NAMESPACE>
-...
+spec:
+  vaultAuthRef: payments-app-config-auth
+  mount: kv/ocp-prod-eu/payments/app-config
+  type: kv-v2
+  path: app
+  refreshAfter: 30s
+  destination:
+    create: true
+    name: payments-app-config
 ```
 
 `consumption_examples` with `integration_type = "gitlab"` renders a GitLab

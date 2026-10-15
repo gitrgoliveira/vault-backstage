@@ -167,7 +167,7 @@ describe('HcpTfClient list caches', () => {
     jest.restoreAllMocks();
   });
 
-  function mockProjectPages(client: HcpTfClient, ...lists: any[][]) {
+  function mockListPages(client: HcpTfClient, ...lists: any[][]) {
     const spy = jest.spyOn(client as any, 'requestAllPages');
     for (const data of lists) spy.mockResolvedValueOnce({ data, included: [] });
     return spy;
@@ -176,7 +176,7 @@ describe('HcpTfClient list caches', () => {
   it('picks up tenant projects created after the first listing', async () => {
     const client = makeClient();
     const now = jest.spyOn(Date, 'now').mockReturnValue(1_000);
-    const spy = mockProjectPages(
+    const spy = mockListPages(
       client,
       [{ id: 'prj-a', attributes: { name: 'acme-Vault-dev' } }],
       [
@@ -205,7 +205,7 @@ describe('HcpTfClient list caches', () => {
       attributes: { name, 'no-code': true },
       relationships: { 'no-code-modules': { data: [{ id }] } },
     });
-    mockProjectPages(
+    mockListPages(
       client,
       [mod('add-kvv2', 'nocode-1')],
       [mod('add-kvv2', 'nocode-1'), mod('add-pgsql-role', 'nocode-2')],
@@ -218,6 +218,23 @@ describe('HcpTfClient list caches', () => {
     await expect(client.resolveNoCodModuleId('add-pgsql-role')).resolves.toBe(
       'nocode-2',
     );
+  });
+
+  it('keeps serving the last good project list when a refetch fails', async () => {
+    const client = makeClient();
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000);
+    jest
+      .spyOn(client as any, 'requestAllPages')
+      .mockResolvedValueOnce({
+        data: [{ id: 'prj-a', attributes: { name: 'acme-Vault-dev' } }],
+        included: [],
+      })
+      .mockRejectedValueOnce(new Error('503'));
+
+    await client.listVaultProjects();
+    now.mockReturnValue(1_000 + LIST_CACHE_TTL_MS);
+    const projects = await client.listVaultProjects();
+    expect(projects.map(p => p.id)).toEqual(['prj-a']);
   });
 
   it('findAdminProjectId returns undefined when the admin project does not exist', async () => {

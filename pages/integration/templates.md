@@ -42,7 +42,7 @@ Adjust the `target` paths relative to your `packages/backend/` directory.
 
 Templates at L1 and above use **Entity Picker** fields that reference entities created by earlier layers:
 
-1. **L0** creates tenant projects and namespaces. The catalog provider ingests these as `vault-target` resources, but only from L0 workspaces in the admin project named by `hcpTerraform.projects.adminProjectName`, so the L0 form's Admin Project Name must match it.
+1. **L0** creates tenant projects and namespaces. The catalog provider ingests these as `vault-target` resources, but only from L0 workspaces in the admin project named by `hcpTerraform.projects.adminProjectName` (or identified by `adminProjectId`), so the L0 form's Admin Project Name must match it.
 2. **L1** uses an Entity Picker filtered to `vault-target` resources to select the tenant and environment. It creates trust workspaces ingested as `vault-workspace` resources.
 3. **L2** uses Scoped Entity Pickers scoped to the selected tenant and environment (the `hcptf.io/target` annotation). The Kubernetes path lists `terraform-vault-cluster-onboarding` workspaces that have a `cluster_name` output; the GitLab path lists `terraform-vault-gitlab-onboarding` workspaces that have a `gitlab_instance_name` output.
 4. **L3** uses Scoped Entity Pickers scoped the same way, filtered per use-case type:
@@ -86,7 +86,7 @@ environments:
       - prod
 ```
 
-Also update `hcpTerraform.projects.namingPattern` in `app-config.yaml` if your project naming convention differs. The template YAML is the only place that controls which environment options appear on the form.
+Each new environment also needs its `admin/<env>` namespace, created by your admin bootstrap ([HCP Vault prerequisites](terraform-modules.md#admin-namespace)); otherwise the L0 run for that environment fails. The template YAML is the only place that controls which environment options appear on the form.
 
 ### Add authentication gates
 

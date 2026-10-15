@@ -73,7 +73,7 @@ The scaffolder module registers these actions:
 
 The catalog module registers the `HcpTerraformWorkspaceProvider`, which refreshes every 5 minutes and emits:
 
-- **`vault-workspace`** resources for every workspace created from a known Vault module (filtered by the `Product:Vault` project tag)
+- **`vault-workspace`** resources for every workspace created from a known Vault module (filtered to `Product:Vault`-tagged projects plus the admin project, which holds the L0 workspaces)
 - **`vault-target`** resources for each tenant and environment pair discovered from L0 onboarding outputs
 
 ## Configure `app-config.yaml`
@@ -115,7 +115,7 @@ Set `HCP_TF_TOKEN` and `HCP_TF_ORGANIZATION` in your deployment environment befo
 ### Enable destroy runs
 
 !!! danger "No per-owner authorization check"
-    The `hcptf:run:create` action accepts any `workspaceId` in your organization and can queue a destroy run against it — the plugin performs no check that the requesting user owns the workspace. Only set `actions.enableDestroy: true` alongside a template that restricts the `workspaceId` input to workspaces owned by the requesting user, or a permission policy that gates `scaffolder.template.execute` for the destroy template. When the action is enabled, the backend logs a warning at startup as a reminder.
+    The `hcptf:run:create` action accepts any `workspaceId` in your organization and can queue a destroy run against it — the plugin performs no check that the requesting user owns the workspace. Only set `actions.enableDestroy: true` alongside a template that restricts the `workspaceId` input to workspaces owned by the requesting user, or a permission policy that gates `scaffolder.action.execute` conditionally on the action ID `hcptf:run:create` (the scaffolder's `HAS_ACTION_ID` rule). When the action is enabled, the backend logs a warning at startup as a reminder.
 
 ### Optional: pre-populate the module map
 

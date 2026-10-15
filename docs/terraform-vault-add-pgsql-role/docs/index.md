@@ -20,7 +20,7 @@ Use-case.
 
 ## No-code provisioning
 
-This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.4.1`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Connection outputs come from `pgsql-onboarding`; the workload module must be applied first so the entity can be discovered.
+This module is no-code enabled in the `hc-ric-demo` private registry (pinned to `0.4.2`). Click **Provision workspace**, pick a project and workspace name, then complete the form. Connection outputs come from `pgsql-onboarding`; the workload module must be applied first so the entity can be discovered.
 
 Form fields:
 
@@ -38,7 +38,7 @@ Form fields:
 ```hcl
 module "add_pgsql_role" {
   source  = "app.terraform.io/<org>/add-pgsql-role/vault"
-  version = "~> 0.4.1"
+  version = "~> 0.4.2"
 
   cluster_name       = "ocp-prod-eu"
   workload_name      = "payments"
@@ -54,10 +54,22 @@ module "add_pgsql_role" {
 `injector_yaml` example:
 
 ```yaml
+# JWT auth reads a projected ServiceAccount token with audience "vault" (the
+# workload role's bound_audience). Add this volume to the pod spec:
+#   volumes:
+#     - name: vault-token
+#       projected:
+#         sources:
+#           - serviceAccountToken:
+#               path: token
+#               audience: vault
 vault.hashicorp.com/agent-inject: "true"
 vault.hashicorp.com/role: "ocp-prod-eu-payments"
 vault.hashicorp.com/auth-type: "jwt"
 vault.hashicorp.com/auth-path: "auth/jwt/ocp-prod-eu"
+vault.hashicorp.com/agent-service-account-token-volume-name: "vault-token"
+vault.hashicorp.com/auth-config-path: "/var/run/secrets/vault.hashicorp.com/serviceaccount/token"
+vault.hashicorp.com/auth-config-remove-jwt-after-reading: "false"
 vault.hashicorp.com/service: "<VAULT_ADDRESS>"
 vault.hashicorp.com/namespace: "<VAULT_NAMESPACE>"
 vault.hashicorp.com/agent-inject-secret-db.json: "db/ocp-prod-eu/payments-db/static-creds/ocp-prod-eu-payments-orders-db-pg"
@@ -78,6 +90,8 @@ spec:
   jwt:
     role: ocp-prod-eu-payments
     serviceAccount: <K8S_SERVICE_ACCOUNT>
+    audiences:
+      - vault
 ---
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultDynamicSecret
@@ -88,6 +102,7 @@ spec:
   vaultAuthRef: payments-orders-db-auth
   mount: db/ocp-prod-eu/payments-db
   path: static-creds/ocp-prod-eu-payments-orders-db-pg
+  allowStaticCreds: true
   destination:
     create: true
     name: payments-orders-db

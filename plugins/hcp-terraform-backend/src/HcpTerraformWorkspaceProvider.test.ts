@@ -1,4 +1,13 @@
-import { moduleNameFromSourceId } from './HcpTerraformWorkspaceProvider';
+import type {
+  LoggerService,
+  SchedulerService,
+} from '@backstage/backend-plugin-api';
+import type { EntityProviderConnection } from '@backstage/plugin-catalog-node';
+import type { HcpTfClient, WorkspaceSummary } from './HcpTfClient';
+import {
+  HcpTerraformWorkspaceProvider,
+  moduleNameFromSourceId,
+} from './HcpTerraformWorkspaceProvider';
 import { canonicalModuleName, layerForModule } from './moduleLayer';
 
 describe('moduleNameFromSourceId', () => {
@@ -64,5 +73,80 @@ describe('canonicalModuleName', () => {
       'terraform-vault-add-kvv2',
     );
     expect(canonicalModuleName('rds')).toBe('rds');
+  });
+});
+
+describe('HcpTerraformWorkspaceProvider.refresh project gate', () => {
+  const logger = {
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+    debug: () => {},
+    child: () => logger,
+  } as unknown as LoggerService;
+  const scheduler = {
+    scheduleTask: jest.fn(),
+  } as unknown as SchedulerService;
+
+  const ws = (
+    name: string,
+    module: string,
+    projectId: string,
+  ): WorkspaceSummary => ({
+    id: `ws-${name}`,
+    name,
+    status: 'applied',
+    sourceModuleId: `private/org/${module}/vault/1.0.0`,
+    tagNames: [],
+    projectId,
+    currentStateVersionId: null,
+  });
+
+  async function emittedWorkspaces(workspaces: WorkspaceSummary[]) {
+    const client = {
+      listWorkspaces: async () => workspaces,
+      listVaultProjects: async () => [
+        { id: 'prj-tenant', name: 'acme-Vault-dev' },
+      ],
+      findAdminProjectId: async () => 'prj-admin',
+      discoverOnboardedTargets: async () => [],
+      readOutputsCached: async () => [],
+      workspaceUrl: (n: string) => `https://app.terraform.io/ws/${n}`,
+    } as unknown as HcpTfClient;
+    const provider = new HcpTerraformWorkspaceProvider(
+      client,
+      'org',
+      'tenant',
+      logger,
+      scheduler,
+    );
+    const applyMutation = jest.fn();
+    await provider.connect({
+      applyMutation,
+    } as unknown as EntityProviderConnection);
+    await provider.refresh();
+    return applyMutation.mock.calls[0][0].entities
+      .map((e: any) => e.entity)
+      .filter((e: any) => e.spec.type === 'vault-workspace');
+  }
+
+  it('admits L0 workspaces from the untagged admin project as admin-layer', async () => {
+    const [l0] = await emittedWorkspaces([
+      ws('acme-onboarding', 'hcptf-onboarding', 'prj-admin'),
+    ]);
+    expect(l0.metadata.annotations['hcptf.io/layer']).toBe('admin');
+    expect(l0.spec.system).toBe('system:default/vault-admin');
+    expect(l0.spec.owner).toBe('group:default/vault-platform');
+  });
+
+  it('keeps tagged-project workspaces and drops strays, including non-L0 ones in the admin project', async () => {
+    const names = (
+      await emittedWorkspaces([
+        ws('trust-ok', 'cluster-onboarding', 'prj-tenant'),
+        ws('trust-stray', 'cluster-onboarding', 'prj-other'),
+        ws('trust-in-admin', 'cluster-onboarding', 'prj-admin'),
+      ])
+    ).map((e: any) => e.metadata.name);
+    expect(names).toEqual(['trust-ok']);
   });
 });

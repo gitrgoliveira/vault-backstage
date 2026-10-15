@@ -162,11 +162,16 @@ export class HcpTfClient {
   async listVaultProjects(): Promise<{ id: string; name: string }[]> {
     const cached = this.vaultProjectsCache;
     if (cached && this.isFresh(cached)) return cached.projects;
-    const { data } = await this.requestAllPages(
-      `/api/v2/organizations/${this.organization}/projects` +
-        `?filter%5Btagged%5D%5B0%5D%5Bkey%5D=${encodeURIComponent(this.productTagKey)}` +
-        `&filter%5Btagged%5D%5B0%5D%5Bvalue%5D=${encodeURIComponent(this.productTagValue)}`,
-    );
+    let data: any[];
+    try {
+      ({ data } = await this.requestAllPages(
+        `/api/v2/organizations/${this.organization}/projects` +
+          `?filter%5Btagged%5D%5B0%5D%5Bkey%5D=${encodeURIComponent(this.productTagKey)}` +
+          `&filter%5Btagged%5D%5B0%5D%5Bvalue%5D=${encodeURIComponent(this.productTagValue)}`,
+      ));
+    } catch (err) {
+      return this.staleOrThrow(cached?.projects, 'Vault-tagged projects', err);
+    }
     const projects = data.map((p: any) => ({
       id: p.id as string,
       name: p.attributes?.name as string,
@@ -177,6 +182,18 @@ export class HcpTfClient {
 
   private isFresh(cache: { fetchedAt: number }): boolean {
     return Date.now() - cache.fetchedAt < LIST_CACHE_TTL_MS;
+  }
+
+  /**
+   * A failed refetch keeps serving the last good list: an empty or missing
+   * project list would lift the catalog's project gate for that refresh.
+   */
+  private staleOrThrow<T>(stale: T | undefined, what: string, err: unknown): T {
+    if (stale === undefined) throw err;
+    this.logger.warn(
+      `Could not refresh ${what}; using the previous list: ${(err as Error).message}`,
+    );
+    return stale;
   }
 
   /**
@@ -238,12 +255,11 @@ export class HcpTfClient {
    * `project_names` maps keyed by environment, which are the authoritative
    * record of the per-environment tenant projects that were created.
    */
-  async discoverOnboardedTargets(): Promise<
+  async discoverOnboardedTargets(
+    adminProjectId: string,
+  ): Promise<
     { tenant: string; env: string; projectId: string; name: string }[]
   > {
-    const adminProjectId = await this.findAdminProjectId();
-    if (!adminProjectId) return [];
-
     const workspaces = await this.listWorkspaces(adminProjectId);
     const onboarding = workspaces.filter(w =>
       (w.sourceModuleId ?? '').includes('hcptf-onboarding'),
@@ -457,7 +473,12 @@ export class HcpTfClient {
   > {
     const cached = this.vaultNoCodeModulesCache;
     if (cached && this.isFresh(cached)) return cached.modules;
-    const mods = await this.listVaultRegistryModules();
+    let mods: any[];
+    try {
+      mods = await this.listVaultRegistryModules();
+    } catch (err) {
+      return this.staleOrThrow(cached?.modules, 'Vault no-code modules', err);
+    }
     const modules = mods
       .filter(
         m =>

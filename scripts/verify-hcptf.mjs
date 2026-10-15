@@ -146,4 +146,10 @@ console.log(
   `\n${okCount}/${moduleNames.size} modules ready for no-code provisioning.`,
 );
 // Any unresolved module fails its template at run time, so fail the preflight.
-if (okCount !== moduleNames.size) process.exit(1);
+// The check reads the org, not app-config, so a moduleMap override does not count.
+if (okCount !== moduleNames.size) {
+  console.error(
+    '✖ Every module the templates use must be an enabled Vault no-code module.',
+  );
+  process.exit(1);
+}

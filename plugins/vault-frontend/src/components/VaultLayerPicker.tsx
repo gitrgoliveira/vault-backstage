@@ -9,7 +9,7 @@ import { LAYER_ANNOTATION } from './layer';
 /**
  * Catalog list filter that narrows entities by their `hcptf.io/layer`
  * annotation. Applies to any entity carrying it: vault-workspace Resources
- * (the `/create` card they were provisioned from: trust -> L1, workload -> L2,
+ * (the `/create` card they were provisioned from: admin -> L0, trust -> L1, workload -> L2,
  * usecase -> L3) and the terraform-module Components in catalog/modules.yaml.
  */
 export class VaultLayerFilter implements EntityFilter {
@@ -35,7 +35,7 @@ type VaultLayerEntityFilters = DefaultEntityFilters & {
 
 /**
  * Sidebar filter for the catalog list page that lets users filter vault
- * workspaces or modules by layer (trust / workload / usecase). Available
+ * workspaces or modules by layer (admin / trust / workload / usecase). Available
  * options are sourced from the current kind/type facet, so the picker only
  * appears when the listed entities actually carry the `hcptf.io/layer`
  * annotation.

@@ -31,7 +31,7 @@ Every card follows the same pattern:
 
 The scaffolder creates the HCP Terraform workspace first, then waits up to 20 minutes for the run. If the run errors, is canceled or discarded, or the wait times out, the task fails and the workspace stays in HCP Terraform:
 
-- Open the task log: the error includes the run URL, and the workspace is listed in HCP Terraform under the tenant project.
+- Open the task log: the error includes the run URL when a run was created, and the workspace is listed in HCP Terraform under the tenant project (the admin project for the Admin card).
 - Fix the cause in HCP Terraform and start a new run there, or delete the workspace before you run the card again with the same Workspace Name, which would otherwise collide with it.
 - After a timeout, check the run in HCP Terraform before you retry; it may still apply.
 
