@@ -77,8 +77,9 @@ resources:
 
 ```yaml
 # --- Vault Agent Injector pod annotations ---
-# JWT auth reads a projected ServiceAccount token with audience "vault" (the
-# workload role's bound_audience). Add this volume to the pod spec:
+# JWT auth reads a projected ServiceAccount token with audience "vault", the
+# workload module's default bound_audience (change both if you overrode it).
+# Add this volume to the pod spec, without mounting it in the app container:
 #   volumes:
 #     - name: vault-token
 #       projected:
@@ -111,7 +112,7 @@ spec:
     role: ocp-prod-eu-payments
     serviceAccount: <K8S_SERVICE_ACCOUNT>
     audiences:
-      - vault
+      - vault # the workload module's bound_audience
 ---
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
