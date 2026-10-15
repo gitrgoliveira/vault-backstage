@@ -1,8 +1,5 @@
-import {
-  canonicalModuleName,
-  layerForModule,
-  moduleNameFromSourceId,
-} from './HcpTerraformWorkspaceProvider';
+import { moduleNameFromSourceId } from './HcpTerraformWorkspaceProvider';
+import { canonicalModuleName, layerForModule } from './moduleLayer';
 
 describe('moduleNameFromSourceId', () => {
   it('extracts the short registry name from a source-module-id', () => {
@@ -37,7 +34,14 @@ describe('layerForModule', () => {
 
   it('returns undefined for non-Vault no-code modules so they are skipped', () => {
     // "k8s" is a different no-code module; the Vault one is add-k8s-namespace-access.
-    for (const m of ['rds', 'terramino', 'redis-ec2', 'virtual-machine', 'vpc', 'k8s']) {
+    for (const m of [
+      'rds',
+      'terramino',
+      'redis-ec2',
+      'virtual-machine',
+      'vpc',
+      'k8s',
+    ]) {
       expect(layerForModule(m)).toBeUndefined();
     }
   });

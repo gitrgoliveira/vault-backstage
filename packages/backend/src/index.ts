@@ -7,7 +7,10 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
-import { hcpTerraformScaffolderModule, hcpTerraformCatalogModule } from '@gitrgoliveira/plugin-hcp-terraform-backend';
+import {
+  hcpTerraformScaffolderModule,
+  hcpTerraformCatalogModule,
+} from '@gitrgoliveira/plugin-hcp-terraform-backend';
 import { vaultIdpPermissionModule } from './permissions.ts';
 
 const backend = createBackend();
@@ -61,6 +64,9 @@ backend.add(import('@backstage/plugin-search-backend-module-techdocs'));
 
 // kubernetes plugin
 backend.add(import('@backstage/plugin-kubernetes-backend'));
+
+// user settings plugin: stores starred entities and other settings server-side
+backend.add(import('@backstage/plugin-user-settings-backend'));
 
 // notifications and signals plugins
 backend.add(import('@backstage/plugin-notifications-backend'));

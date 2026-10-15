@@ -47,63 +47,57 @@ spec:
       dependencies:
         useCaseType:
           oneOf:
-            - required: [usecaseName, clusterName, workloadName, parentWorkloadWorkspace]
+            - required: [usecaseName, parentWorkloadWorkspace]
               properties:
                 useCaseType:
                   enum: [kvv2]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                workloadName: { title: Workload Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 parentWorkloadWorkspace:
                   title: Parent Workload Workspace
                   type: string
-                  description: Kubernetes workload (Layer 2) in the selected tenant that receives KV read access.
+                  description: Kubernetes workload (Layer 2) in the selected tenant that receives KV read access. Its cluster and workload names identify the Vault entity.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: workload
+                      metadata.annotations.hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
-            - required: [usecaseName, scopeName, parentGitlabWorkload]
+            - required: [usecaseName, parentGitlabWorkload]
               properties:
                 useCaseType:
                   enum: [kvv2-gitlab]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                scopeName:
-                  title: KV Scope / Path Prefix
-                  type: string
-                  description: Naming prefix for the KV mount, policy, and group (e.g. gitlab or the group name). The workload name is taken from the selected GitLab workload.
-                  pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
                 parentGitlabWorkload:
                   title: Parent GitLab Workload Workspace
                   type: string
-                  description: GitLab project workload (Layer 2) in the selected tenant that receives KV read access.
+                  description: GitLab project workload (Layer 2) in the selected tenant that receives KV read access. Its GitLab instance and workload names identify the Vault entity.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-add-gitlab-project-access
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
-            - required: [usecaseName, clusterName, workloadName, dbUsername, parentWorkloadWorkspace, parentPgsqlWorkspace]
+            - required: [usecaseName, dbUsername, parentWorkloadWorkspace, parentPgsqlWorkspace]
               properties:
                 useCaseType:
                   enum: [pgsql-role]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                workloadName: { title: Workload Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 dbUsername: { title: Database Username, type: string }
                 parentWorkloadWorkspace:
                   title: Parent Workload Workspace
                   type: string
-                  description: Workload (Layer 2) in the selected tenant that receives database access.
+                  description: Kubernetes workload (Layer 2) in the selected tenant that receives database access. Its cluster and workload names identify the Vault entity and prefix the static role, so pick a connection onboarded for the same cluster.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
-                      metadata.annotations.hcptf.io/layer: workload
+                      metadata.annotations.hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
                 parentPgsqlWorkspace:
                   title: Parent PostgreSQL Connection Workspace
@@ -115,25 +109,25 @@ spec:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/module-name: terraform-vault-pgsql-onboarding
+                      metadata.annotations.hcptf.io/output.db_mount_path: { exists: true }
                     scopeField: onboardedTarget
-            - required: [usecaseName, clusterName, workloadName, secretPath, parentWorkloadWorkspace]
+            - required: [usecaseName, secretPath, parentWorkloadWorkspace]
               properties:
                 useCaseType:
                   enum: [permission-group]
                 usecaseName: { title: Use-case Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                workloadName: { title: Workload Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 secretPath: { title: Vault Secret Path, type: string }
                 parentWorkloadWorkspace:
                   title: Parent Workload Workspace
                   type: string
-                  description: Workload (Layer 2) in the selected tenant that receives this permission group.
+                  description: Workload (Layer 2) in the selected tenant that receives this permission group. Its cluster (or GitLab instance) and workload names identify the Vault entity.
                   ui:field: ScopedEntityPicker
                   ui:options:
                     catalogFilter:
                       kind: Resource
                       spec.type: vault-workspace
                       metadata.annotations.hcptf.io/layer: workload
+                      metadata.annotations.hcptf.io/output.workload_name: { exists: true }
                     scopeField: onboardedTarget
                 capabilityRead: { type: boolean, default: true, title: read }
                 capabilityCreate: { type: boolean, default: false, title: create }
@@ -148,9 +142,9 @@ spec:
                   enum: [pgsql-connection]
                 clusterName: { title: Cluster / Scope Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
                 dbName: { title: Database Name, type: string, pattern: "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" }
-                pgConnectionUrl: { title: PostgreSQL Connection URL, type: string }
+                pgConnectionUrl: { title: PostgreSQL Connection URL, type: string, ui:field: Secret }
                 pgUsername: { title: Root Username, type: string }
-                pgPassword: { title: Root Password, type: string, ui:widget: password }
+                pgPassword: { title: Root Password, type: string, ui:field: Secret }
   steps:
     - id: fetch-target
       name: Resolve tenant project
@@ -190,8 +184,8 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
-          cluster_name: ${{ parameters.clusterName }}
-          workload_name: ${{ parameters.workloadName }}
+          cluster_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.cluster_name'] }}
+          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           integration_type: kubernetes
 
     - id: kvv2-gitlab
@@ -205,7 +199,7 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
-          cluster_name: ${{ parameters.scopeName }}
+          cluster_name: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.gitlab_instance_name'] }}
           workload_name: ${{ steps['fetch-gitlab-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           integration_type: gitlab
 
@@ -220,8 +214,8 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
-          cluster_name: ${{ parameters.clusterName }}
-          workload_name: ${{ parameters.workloadName }}
+          cluster_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.cluster_name'] }}
+          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           db_username: ${{ parameters.dbUsername }}
           db_mount_path: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_mount_path'] }}
           db_connection_name: ${{ steps['fetch-pgsql'].output.entity.metadata.annotations['hcptf.io/output.db_connection_name'] }}
@@ -237,8 +231,8 @@ spec:
         parentWorkspaceName: ${{ steps['fetch-workload'].output.entity.metadata.name }}
         vars:
           usecase_name: ${{ parameters.usecaseName }}
-          cluster_name: ${{ parameters.clusterName }}
-          workload_name: ${{ parameters.workloadName }}
+          cluster_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.cluster_name'] or steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.gitlab_instance_name'] }}
+          workload_name: ${{ steps['fetch-workload'].output.entity.metadata.annotations['hcptf.io/output.workload_name'] }}
           secret_path: ${{ parameters.secretPath }}
           capability_read: ${{ parameters.capabilityRead }}
           capability_create: ${{ parameters.capabilityCreate }}
@@ -259,9 +253,9 @@ spec:
         vars:
           cluster_name: ${{ parameters.clusterName }}
           db_name: ${{ parameters.dbName }}
-          pg_connection_url: ${{ parameters.pgConnectionUrl }}
+          pg_connection_url: ${{ secrets.pgConnectionUrl }}
           pg_username: ${{ parameters.pgUsername }}
-          pg_password: ${{ parameters.pgPassword }}
+          pg_password: ${{ secrets.pgPassword }}
         sensitiveVars:
           pg_connection_url: true
           pg_password: true

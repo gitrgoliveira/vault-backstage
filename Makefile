@@ -73,7 +73,7 @@ update-nocode-pins: ## Pin every Vault no-code module to its latest registry ver
 	node scripts/update-nocode-pins.mjs
 
 backfill-parent-tags: ## Infer & tag parent:<name> on existing workspaces for the graph (dry-run; ARGS=--apply to write)
-	node scripts/backfill-parent-tags.mjs $(ARGS)
+	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/backfill-parent-tags.mjs $(ARGS)
 
 docs-deps: ## Install local TechDocs build deps into an isolated venv
 	python3 -m venv $(TECHDOCS_VENV)

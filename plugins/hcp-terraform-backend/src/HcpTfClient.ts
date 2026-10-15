@@ -19,7 +19,8 @@ const RUN_AWAITING_APPLY = new Set([
   'post_plan_awaiting_decision',
 ]);
 
-const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) =>
+  new Promise<void>(resolve => setTimeout(resolve, ms));
 
 /** Final state of an HCP TF run that the portal waited on. */
 export interface RunResult {
@@ -89,7 +90,11 @@ export class HcpTfClient {
   /** Cache of Vault-tagged projects [{id, name}]. */
   private vaultProjectsCache?: { id: string; name: string }[];
   /** Cache of the Vault no-code module list (registry sweep is expensive). */
-  private vaultNoCodeModulesCache?: { name: string; nocodeId: string; versionTags?: string[] }[];
+  private vaultNoCodeModulesCache?: {
+    name: string;
+    nocodeId: string;
+    versionTags?: string[];
+  }[];
   /** Cache of workspaceId -> {stateVersionId, outputs}; avoids refetching unchanged outputs. */
   private outputsCache: Map<
     string,
@@ -103,7 +108,8 @@ export class HcpTfClient {
   constructor(config: Config, logger: LoggerService) {
     const cfg = config.getConfig('hcpTerraform');
     this.organization = cfg.getString('organization');
-    this.baseUrl = cfg.getOptionalString('baseUrl') ?? 'https://app.terraform.io';
+    this.baseUrl =
+      cfg.getOptionalString('baseUrl') ?? 'https://app.terraform.io';
     this.token = cfg.getString('token');
     this.logger = logger;
     const projectsCfg = cfg.getOptionalConfig('projects');
@@ -177,7 +183,9 @@ export class HcpTfClient {
 
   /** Derive the tenant name from a `<tenant>-Vault-<env>` project name. */
   private tenantFromProjectName(name: string, env: string): string | undefined {
-    const suffix = this.projectNamingPattern.replace('{tenant}', '').replace('{env}', env);
+    const suffix = this.projectNamingPattern
+      .replace('{tenant}', '')
+      .replace('{env}', env);
     if (suffix && name.endsWith(suffix)) {
       return name.slice(0, name.length - suffix.length) || undefined;
     }
@@ -216,7 +224,12 @@ export class HcpTfClient {
       (w.sourceModuleId ?? '').includes('hcptf-onboarding'),
     );
 
-    const out: { tenant: string; env: string; projectId: string; name: string }[] = [];
+    const out: {
+      tenant: string;
+      env: string;
+      projectId: string;
+      name: string;
+    }[] = [];
     const seen = new Set<string>();
     for (const ws of onboarding) {
       let outputs: WorkspaceOutput[];
@@ -225,10 +238,16 @@ export class HcpTfClient {
       } catch {
         continue; // workspace may not have applied yet
       }
-      const projectIds = this.asStringMap(outputs.find(o => o.key === 'project_ids')?.value);
+      const projectIds = this.asStringMap(
+        outputs.find(o => o.key === 'project_ids')?.value,
+      );
       if (!projectIds) continue;
-      const projectNames = this.asStringMap(outputs.find(o => o.key === 'project_names')?.value);
-      const namespaces = this.asStringMap(outputs.find(o => o.key === 'vault_namespaces')?.value);
+      const projectNames = this.asStringMap(
+        outputs.find(o => o.key === 'project_names')?.value,
+      );
+      const namespaces = this.asStringMap(
+        outputs.find(o => o.key === 'vault_namespaces')?.value,
+      );
 
       for (const [env, projectId] of Object.entries(projectIds)) {
         if (!projectId || seen.has(projectId)) continue;
@@ -267,7 +286,9 @@ export class HcpTfClient {
       'GET',
       `/api/v2/organizations/${this.organization}/projects?filter%5Bnames%5D=${encodeURIComponent(name)}`,
     );
-    const match = (res.data ?? []).find((p: any) => p.attributes?.name === name);
+    const match = (res.data ?? []).find(
+      (p: any) => p.attributes?.name === name,
+    );
     if (!match) {
       throw new Error(
         `HCP Terraform project "${name}" was not found in org "${this.organization}".`,
@@ -325,9 +346,10 @@ export class HcpTfClient {
         const retryAfter = Number(res.headers.get('retry-after'));
         // Cap the server-supplied Retry-After: scaffolder actions await this
         // inline, so an upstream sending a huge value must not stall them.
-        const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
-          ? Math.min(retryAfter * 1000, 30_000)
-          : Math.min(1000 * 2 ** attempt, 8000);
+        const delayMs =
+          Number.isFinite(retryAfter) && retryAfter > 0
+            ? Math.min(retryAfter * 1000, 30_000)
+            : Math.min(1000 * 2 ** attempt, 8000);
         this.logger.warn(
           `HCP TF API ${method} ${path} -> ${res.status}; retrying in ${delayMs}ms ` +
             `(attempt ${attempt + 1}/${maxRetries}).`,
@@ -368,7 +390,9 @@ export class HcpTfClient {
    * silently truncate at the first 100 results. Aggregates sideloaded
    * `included` resources across pages for callers that use `?include=`.
    */
-  private async requestAllPages(path: string): Promise<{ data: any[]; included: any[] }> {
+  private async requestAllPages(
+    path: string,
+  ): Promise<{ data: any[]; included: any[] }> {
     const sep = path.includes('?') ? '&' : '?';
     const data: any[] = [];
     const included: any[] = [];
@@ -403,7 +427,9 @@ export class HcpTfClient {
    * List all Vault no-code modules with their nocode-xxx ids, in a single
    * targeted call. This is the authoritative set the portal can provision.
    */
-  async listVaultNoCodeModules(): Promise<{ name: string; nocodeId: string; versionTags?: string[] }[]> {
+  async listVaultNoCodeModules(): Promise<
+    { name: string; nocodeId: string; versionTags?: string[] }[]
+  > {
     if (this.vaultNoCodeModulesCache) return this.vaultNoCodeModulesCache;
     const mods = await this.listVaultRegistryModules();
     this.vaultNoCodeModulesCache = mods
@@ -429,7 +455,9 @@ export class HcpTfClient {
     const cached = this.moduleIdCache.get(moduleName);
     if (cached) return cached;
 
-    this.logger.info(`Resolving no-code module ID for "${moduleName}" from org ${this.organization}`);
+    this.logger.info(
+      `Resolving no-code module ID for "${moduleName}" from org ${this.organization}`,
+    );
 
     const candidates = this.candidateNames(moduleName);
     const ncMods = await this.listVaultNoCodeModules();
@@ -444,7 +472,9 @@ export class HcpTfClient {
     }
 
     this.moduleIdCache.set(moduleName, match.nocodeId);
-    this.logger.info(`Resolved "${moduleName}" -> "${match.name}" -> ${match.nocodeId}`);
+    this.logger.info(
+      `Resolved "${moduleName}" -> "${match.name}" -> ${match.nocodeId}`,
+    );
     return match.nocodeId;
   }
 
@@ -455,9 +485,19 @@ export class HcpTfClient {
    */
   async preflight(moduleNames: string[]): Promise<{
     organization: string;
-    results: { module: string; status: 'ok' | 'error'; nocodeId?: string; error?: string }[];
+    results: {
+      module: string;
+      status: 'ok' | 'error';
+      nocodeId?: string;
+      error?: string;
+    }[];
   }> {
-    const results: { module: string; status: 'ok' | 'error'; nocodeId?: string; error?: string }[] = [];
+    const results: {
+      module: string;
+      status: 'ok' | 'error';
+      nocodeId?: string;
+      error?: string;
+    }[] = [];
     for (const name of moduleNames) {
       try {
         const id = await this.resolveNoCodModuleId(name);
@@ -470,7 +510,9 @@ export class HcpTfClient {
   }
 
   /** Create a new no-code workspace. Returns workspace ID and URL. */
-  async createWorkspace(opts: CreateWorkspaceOptions): Promise<CreateWorkspaceResult> {
+  async createWorkspace(
+    opts: CreateWorkspaceOptions,
+  ): Promise<CreateWorkspaceResult> {
     const {
       workspaceName,
       noCodModuleId,
@@ -539,7 +581,9 @@ export class HcpTfClient {
   }
 
   /** Get the most recent run for a workspace (HCP TF returns newest first). */
-  async getLatestRun(workspaceId: string): Promise<{ id: string; status: string } | null> {
+  async getLatestRun(
+    workspaceId: string,
+  ): Promise<{ id: string; status: string } | null> {
     const res = await this.request<any>(
       'GET',
       `/api/v2/workspaces/${workspaceId}/runs?page%5Bsize%5D=1`,
@@ -552,7 +596,10 @@ export class HcpTfClient {
   /** Get a single run's current status. */
   async getRun(runId: string): Promise<{ id: string; status: string }> {
     const res = await this.request<any>('GET', `/api/v2/runs/${runId}`);
-    return { id: res.data.id, status: res.data.attributes?.status ?? 'unknown' };
+    return {
+      id: res.data.id,
+      status: res.data.attributes?.status ?? 'unknown',
+    };
   }
 
   /**
@@ -663,7 +710,10 @@ export class HcpTfClient {
   }
 
   /** Queue a destroy run on a workspace. */
-  async createDestroyRun(workspaceId: string, message: string): Promise<{ runId: string; runUrl: string }> {
+  async createDestroyRun(
+    workspaceId: string,
+    message: string,
+  ): Promise<{ runId: string; runUrl: string }> {
     const payload = {
       data: {
         type: 'runs',
@@ -690,12 +740,14 @@ export class HcpTfClient {
     // include=current_run sideloads the run so we can surface real status
     // (the `latest-run` attribute does not exist; it is a relationship).
     let path = `/api/v2/organizations/${this.organization}/workspaces?include=current_run`;
-    if (projectId) path += `&filter%5Bproject%5D%5Bid%5D=${encodeURIComponent(projectId)}`;
+    if (projectId)
+      path += `&filter%5Bproject%5D%5Bid%5D=${encodeURIComponent(projectId)}`;
 
     const { data, included } = await this.requestAllPages(path);
     const runStatusById = new Map<string, string>();
     for (const r of included) {
-      if (r.type === 'runs') runStatusById.set(r.id, r.attributes?.status ?? 'unknown');
+      if (r.type === 'runs')
+        runStatusById.set(r.id, r.attributes?.status ?? 'unknown');
     }
     return data.map((w: any) => {
       const runId = w.relationships?.['current-run']?.data?.id;

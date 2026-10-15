@@ -2,12 +2,8 @@ import {
   createBackendModule,
   coreServices,
 } from '@backstage/backend-plugin-api';
-import {
-  scaffolderActionsExtensionPoint,
-} from '@backstage/plugin-scaffolder-node';
-import {
-  catalogProcessingExtensionPoint,
-} from '@backstage/plugin-catalog-node';
+import { scaffolderActionsExtensionPoint } from '@backstage/plugin-scaffolder-node';
+import { catalogProcessingExtensionPoint } from '@backstage/plugin-catalog-node';
 import { HcpTfClient } from './HcpTfClient';
 import { HcpTerraformWorkspaceProvider } from './HcpTerraformWorkspaceProvider';
 import { createProvisionAction } from './actions/provision';
@@ -35,7 +31,8 @@ export const hcpTerraformScaffolderModule = createBackendModule({
         // opt-in. Only enable it alongside a template that gates destruction
         // to the workspace owner.
         const enableDestroy =
-          config.getOptionalBoolean('hcpTerraform.actions.enableDestroy') ?? false;
+          config.getOptionalBoolean('hcpTerraform.actions.enableDestroy') ??
+          false;
         if (enableDestroy) {
           actions.push(createRunAction(client));
           logger.warn(

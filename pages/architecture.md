@@ -10,7 +10,7 @@ The Vault Self-Service Portal uses a layered onboarding model. Each layer builds
 ├──────────────────────────────────────────────────────┤
 │  L2 — Workload                                       │
 │  K8s namespace access · GitLab project access        │
-│  Registers a principal as a Vault identity           │
+│  Registers a workload as a Vault identity            │
 ├──────────────────────────────────────────────────────┤
 │  L1 — Trust                                          │
 │  Cluster onboarding · GitLab onboarding              │
@@ -24,11 +24,11 @@ The Vault Self-Service Portal uses a layered onboarding model. Each layer builds
 
 ## Layer dependencies
 
-Layers must be provisioned in order. Each layer's Terraform module reads outputs from the layer below through HCP Terraform workspace data sharing.
+Layers must be provisioned in order. The portal reads the selected parent workspace's outputs from the catalog and passes its scope names to the next module as variables; each module derives its auth paths, role names and entity names from those, so the layers line up without typed-in values.
 
 - **L0 → L1**: Trust workspaces are placed inside the tenant's HCP Terraform project, inheriting the Vault credentials variable set.
-- **L1 → L2**: Workload modules reference the `jwt_auth_path` and `jwt_mount_accessor` outputs from the trust workspace.
-- **L2 → L3**: Use-case modules look up the workload entity by name to bind an identity group.
+- **L1 → L2**: Workload modules take the trust's `cluster_name` (Kubernetes) or `gitlab_instance_name` (GitLab) and derive the JWT mount path from it.
+- **L2 → L3**: Use-case modules take the workload's scope name and `workload_name` and look up the workload entity by `<scope>-<workload>` to bind an identity group.
 
 ## Backstage catalog model
 

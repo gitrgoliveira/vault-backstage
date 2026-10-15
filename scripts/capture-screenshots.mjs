@@ -38,8 +38,18 @@ const TEMPLATES = [
     slug: 'trust-onboarding',
     label: 'L1 Trust Onboarding',
     variants: [
-      { name: 'cluster', label: 'Kubernetes cluster', field: 'Trust Type', value: 'cluster' },
-      { name: 'gitlab', label: 'GitLab instance', field: 'Trust Type', value: 'gitlab' },
+      {
+        name: 'cluster',
+        label: 'Kubernetes cluster',
+        field: 'Trust Type',
+        value: 'cluster',
+      },
+      {
+        name: 'gitlab',
+        label: 'GitLab instance',
+        field: 'Trust Type',
+        value: 'gitlab',
+      },
     ],
   },
   {
@@ -57,10 +67,30 @@ const TEMPLATES = [
     label: 'L3 Use-case Onboarding',
     variants: [
       { name: 'kvv2', label: 'KVv2 (K8s)', field: 'Use-case Type', value: '0' },
-      { name: 'kvv2-gitlab', label: 'KVv2 (GitLab)', field: 'Use-case Type', value: '1' },
-      { name: 'pgsql-role', label: 'PostgreSQL role', field: 'Use-case Type', value: '2' },
-      { name: 'permission-group', label: 'Permission group', field: 'Use-case Type', value: '3' },
-      { name: 'pgsql-connection', label: 'PostgreSQL connection', field: 'Use-case Type', value: '4' },
+      {
+        name: 'kvv2-gitlab',
+        label: 'KVv2 (GitLab)',
+        field: 'Use-case Type',
+        value: '1',
+      },
+      {
+        name: 'pgsql-role',
+        label: 'PostgreSQL role',
+        field: 'Use-case Type',
+        value: '2',
+      },
+      {
+        name: 'permission-group',
+        label: 'Permission group',
+        field: 'Use-case Type',
+        value: '3',
+      },
+      {
+        name: 'pgsql-connection',
+        label: 'PostgreSQL connection',
+        field: 'Use-case Type',
+        value: '4',
+      },
     ],
   },
 ];
@@ -90,7 +120,9 @@ async function selectMuiDropdown(page, fieldLabel, optionValue) {
 
   // Step 3: the listbox appears as a <ul role="listbox"> in a portal.
   // Each option is <li role="option" data-value="cluster">
-  const option = page.locator(`li[role="option"][data-value="${optionValue}"]`).first();
+  const option = page
+    .locator(`li[role="option"][data-value="${optionValue}"]`)
+    .first();
   if (await option.count()) {
     await option.click();
     await page.waitForTimeout(800);
@@ -103,21 +135,47 @@ async function selectMuiDropdown(page, fieldLabel, optionValue) {
   for (let i = 0; i < count; i++) {
     const text = await optionByText.nth(i).textContent();
     const dataVal = await optionByText.nth(i).getAttribute('data-value');
-    if (dataVal === optionValue || text.toLowerCase().includes(optionValue.toLowerCase())) {
+    if (
+      dataVal === optionValue ||
+      text.toLowerCase().includes(optionValue.toLowerCase())
+    ) {
       await optionByText.nth(i).click();
       await page.waitForTimeout(800);
       return;
     }
   }
 
-  console.warn(`  ⚠ Option "${optionValue}" not found in listbox for "${fieldLabel}"`);
+  console.warn(
+    `  ⚠ Option "${optionValue}" not found in listbox for "${fieldLabel}"`,
+  );
   await page.keyboard.press('Escape');
 }
+
+// Hard cap on how long the headless browser may stay open; a hung page wait
+// must not leave Chromium running in the background.
+const MAX_RUNTIME_MS = 30 * 60 * 1000;
 
 async function main() {
   console.log(`Connecting to ${baseUrl}...`);
 
   const browser = await chromium.launch({ headless: true });
+  const watchdog = setTimeout(async () => {
+    console.error(
+      `Screenshot capture exceeded ${MAX_RUNTIME_MS / 60000} minutes; closing the browser.`,
+    );
+    await browser.close().catch(() => {});
+    process.exit(1);
+  }, MAX_RUNTIME_MS);
+  try {
+    await capture(browser);
+  } finally {
+    clearTimeout(watchdog);
+    await browser.close();
+  }
+  console.log(`\n✅ All screenshots saved to pages/img/`);
+}
+
+async function capture(browser) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2,
@@ -139,13 +197,17 @@ async function main() {
     const templateUrl = `${baseUrl}/create/templates/default/${template.name}`;
 
     for (const variant of template.variants) {
-      const filename = template.variants.length === 1
-        ? `${template.slug}-form.png`
-        : `${template.slug}-${variant.name}.png`;
+      const filename =
+        template.variants.length === 1
+          ? `${template.slug}-form.png`
+          : `${template.slug}-${variant.name}.png`;
 
       console.log(`  → ${variant.label} → ${filename}`);
 
-      await page.goto(templateUrl, { waitUntil: 'networkidle', timeout: 30000 });
+      await page.goto(templateUrl, {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
       await page.waitForTimeout(1500);
 
       // Select variant if there's a conditional dropdown
@@ -163,9 +225,6 @@ async function main() {
       console.log(`  ✓ saved ${filename}`);
     }
   }
-
-  await browser.close();
-  console.log(`\n✅ All screenshots saved to pages/img/`);
 }
 
 main().catch(err => {

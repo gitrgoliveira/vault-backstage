@@ -21,7 +21,11 @@ export type ScopedEntityPickerUiOptions = {
 };
 
 function convertOpsValue(value: unknown): string | symbol {
-  if (value && typeof value === 'object' && (value as { exists?: unknown }).exists) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    (value as { exists?: unknown }).exists
+  ) {
     return CATALOG_FILTER_EXISTS;
   }
   return String(value);
@@ -49,6 +53,20 @@ function buildCatalogFilter(
   return Array.isArray(catalogFilter)
     ? catalogFilter.map(toQuery)
     : toQuery(catalogFilter);
+}
+
+/**
+ * A selected value is stale when the candidate list has loaded and no longer
+ * contains it: a hand-edited `?formData=` deep link, or a parent picked before
+ * the tenant/environment changed. Never stale while candidates are unknown.
+ */
+export function isStaleSelection(
+  value: string | undefined,
+  candidates: string[] | undefined,
+): boolean {
+  return (
+    Boolean(value) && candidates !== undefined && !candidates.includes(value!)
+  );
 }
 
 export function ScopedEntityPicker(
@@ -129,8 +147,22 @@ export function ScopedEntityPicker(
     [scoped],
   );
 
+  // Candidates are only known once the fetch succeeded and, for scoped
+  // pickers, the scope is selected.
+  const candidates =
+    entities !== undefined && !(scopeField && !scopeName)
+      ? entityRefs
+      : undefined;
+  useEffect(() => {
+    if (isStaleSelection(formData, candidates)) {
+      onChange('');
+    }
+  }, [formData, candidates, onChange]);
+
   const labelFor = (ref: string): string => {
-    const entity = scoped.find(candidate => stringifyEntityRef(candidate) === ref);
+    const entity = scoped.find(
+      candidate => stringifyEntityRef(candidate) === ref,
+    );
     return entity?.metadata.title ?? ref;
   };
 

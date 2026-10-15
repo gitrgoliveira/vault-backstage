@@ -8,8 +8,10 @@ export function createRunAction(client: HcpTfClient) {
     schema: {
       input: {
         workspaceId: z => z.string().describe('HCP TF workspace ID (ws-xxx).'),
-        isDestroy: z => z.boolean().describe('Set true to queue a destroy run.'),
-        message: z => z.string().optional().describe('Human-readable run message.'),
+        isDestroy: z =>
+          z.boolean().describe('Set true to queue a destroy run.'),
+        message: z =>
+          z.string().optional().describe('Human-readable run message.'),
       },
       output: {
         runId: z => z.string(),
@@ -25,14 +27,19 @@ export function createRunAction(client: HcpTfClient) {
       const runMessage =
         (message as string | undefined) ??
         `${isDestroy ? 'Destroy' : 'Apply'} via Vault IDP by ${requestedBy}`;
-      ctx.logger.info(`hcptf:run:create: workspaceId=${workspaceId} isDestroy=${isDestroy}`);
+      ctx.logger.info(
+        `hcptf:run:create: workspaceId=${workspaceId} isDestroy=${isDestroy}`,
+      );
       if (!isDestroy) {
         throw new Error(
           'hcptf:run:create only supports destroy runs. Set isDestroy: true, ' +
             'or use hcptf:nocode:provision to create and apply workspaces.',
         );
       }
-      const result = await client.createDestroyRun(workspaceId as string, runMessage);
+      const result = await client.createDestroyRun(
+        workspaceId as string,
+        runMessage,
+      );
       ctx.output('runId', result.runId);
       ctx.output('runUrl', result.runUrl);
     },

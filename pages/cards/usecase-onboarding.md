@@ -24,6 +24,8 @@ Five use-case types are supported:
 | **Workspace Name** | Yes | `string` | Unique HCP Terraform workspace name, such as `sdi-dev-payments-kv`. |
 | **Use-case Type** | Yes | `enum` | Selects which use-case to provision (see table above). |
 
+The use-case modules find the Vault identity entity by the name `<cluster>-<workload>`, so every use-case backed by a parent workload takes the cluster (or GitLab instance) name and the workload name from that parent's outputs. There are no form fields for them, which keeps them from drifting out of sync with L1/L2. The parent pickers list only workspaces that have been applied, because an unapplied workspace has no outputs to read.
+
 ### KV v2 (Kubernetes workload)
 
 ![Use-case form for KVv2 Kubernetes](../img/usecase-onboarding-kvv2.png)
@@ -31,9 +33,7 @@ Five use-case types are supported:
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Use-case Name** | Yes | `string` | Identifier for this use-case, such as `app-config`. |
-| **Cluster / Scope Name** | Yes | `string` | Must match the cluster name from L1. |
-| **Workload Name** | Yes | `string` | Must match the workload name from L2. |
-| **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 Kubernetes workload workspace. |
+| **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 Kubernetes workload workspace. Supplies the cluster and workload names. |
 
 ### KV v2 (GitLab workload)
 
@@ -42,8 +42,7 @@ Five use-case types are supported:
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Use-case Name** | Yes | `string` | Identifier for this use-case. |
-| **KV Scope / Path Prefix** | Yes | `string` | Naming prefix for the KV mount, policy, and group. |
-| **Parent GitLab Workload Workspace** | Yes | Scoped Entity Picker | The L2 GitLab workload workspace. |
+| **Parent GitLab Workload Workspace** | Yes | Scoped Entity Picker | The L2 GitLab workload workspace. Supplies the GitLab instance and workload names. |
 
 ### PostgreSQL static role
 
@@ -52,10 +51,8 @@ Five use-case types are supported:
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Use-case Name** | Yes | `string` | Identifier for this use-case. |
-| **Cluster / Scope Name** | Yes | `string` | Must match the cluster name from L1. |
-| **Workload Name** | Yes | `string` | Must match the workload name from L2. |
 | **Database Username** | Yes | `string` | The PostgreSQL username for the static role. |
-| **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 workload workspace. |
+| **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 Kubernetes workload workspace. Supplies the cluster and workload names; the static role is prefixed with the cluster name, so pick a connection onboarded for the same cluster. |
 | **Parent PostgreSQL Connection Workspace** | Yes | Scoped Entity Picker | The L3 PostgreSQL connection workspace that backs this role. |
 
 ### Custom ACL permission group
@@ -65,10 +62,8 @@ Five use-case types are supported:
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Use-case Name** | Yes | `string` | Identifier for this use-case. |
-| **Cluster / Scope Name** | Yes | `string` | Scope identifier. |
-| **Workload Name** | Yes | `string` | Must match the workload name from L2. |
 | **Vault Secret Path** | Yes | `string` | The Vault path to grant capabilities on. |
-| **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 workload workspace. |
+| **Parent Workload Workspace** | Yes | Scoped Entity Picker | The L2 workload workspace. Supplies the cluster (or GitLab instance) and workload names. |
 | **read** | — | `boolean` | Default: `true` |
 | **create** | — | `boolean` | Default: `false` |
 | **update** | — | `boolean` | Default: `false` |
@@ -85,9 +80,9 @@ Five use-case types are supported:
 |-------|----------|------|-------------|
 | **Cluster / Scope Name** | Yes | `string` | Scope identifier. |
 | **Database Name** | Yes | `string` | Database identifier. |
-| **PostgreSQL Connection URL** | Yes | `string` | Connection string for the database. |
+| **PostgreSQL Connection URL** | Yes | Secret | Connection string for the database. Kept out of the task's parameters and sent to HCP Terraform as a sensitive variable. |
 | **Root Username** | Yes | `string` | Database admin username. |
-| **Root Password** | Yes | `password` | Database admin password (masked in UI). |
+| **Root Password** | Yes | Secret | Database admin password. Kept out of the task's parameters and sent to HCP Terraform as a sensitive variable. |
 
 !!! warning "Sensitive inputs"
     The PostgreSQL connection URL and root password are marked as sensitive variables in HCP Terraform and are never stored in Backstage or the catalog.
