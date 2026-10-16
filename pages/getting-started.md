@@ -21,12 +21,12 @@ make install
 
 ### 2. Configure environment
 
-Copy the example env file and fill in your HCP Terraform token:
+Copy the example env file and fill in your HCP Terraform organization and token:
 
 ```bash
 cp .env.example .env
 cp app-config.local.yaml.example app-config.local.yaml
-# Edit .env with your HCP_TF_TOKEN
+# Edit .env: set HCP_TF_ORGANIZATION and HCP_TF_TOKEN
 ```
 
 ### 3. Install TechDocs dependencies

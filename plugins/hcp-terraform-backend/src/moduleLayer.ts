@@ -9,7 +9,7 @@
 export const MODULE_LAYER: Record<string, string> = {
   'terraform-vault-cluster-onboarding': 'trust',
   'terraform-vault-gitlab-onboarding': 'trust',
-  'terraform-vault-hcptf-onboarding': 'trust',
+  'terraform-vault-hcptf-onboarding': 'admin',
   'terraform-vault-add-k8s-namespace-access': 'workload',
   'terraform-vault-add-gitlab-project-access': 'workload',
   'terraform-vault-add-kvv2': 'usecase',

@@ -9,6 +9,15 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
+  name: vault-admin
+  description: Admin layer module that onboards tenants into HCP Terraform and Vault.
+spec:
+  owner: group:default/vault-platform
+  domain: vault-self-service
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
   name: vault-trust
   description: Trust layer modules that establish auth backends.
 spec:

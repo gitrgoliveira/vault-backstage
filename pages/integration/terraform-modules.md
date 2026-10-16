@@ -83,7 +83,7 @@ After publishing all modules, run the preflight script from the `vault-backstage
 make verify-hcptf
 ```
 
-This confirms that every module can be resolved through the HCP Terraform API. [Verify the integration](verify.md) shows sample output and failure signatures. If resolution is slow, pre-populate the `hcpTerraform.moduleMap` in your `app-config.yaml` with the no-code module IDs the script prints.
+This confirms that every module the reference templates use can be resolved through the HCP Terraform API, and exits non-zero if any cannot. [Verify the integration](verify.md) shows sample output and failure signatures. If resolution is slow, pre-populate the `hcpTerraform.moduleMap` in your `app-config.yaml` with the no-code module IDs the script prints.
 
 ## HCP Vault prerequisites
 
@@ -96,7 +96,9 @@ The `admin` namespace must exist and contain:
 - A **JWT auth mount** (default path `tf_jwt`) configured to trust HCP Terraform's OIDC issuer
 - An **admin role** on that mount, bound to the admin project's workspaces
 
-The `terraform-vault-hcptf-onboarding` module (L0) authenticates to the `admin` namespace and creates per-environment child namespaces under it.
+- One **environment namespace** per environment under `admin` (`admin/dev`, `admin/test`, `admin/prod` by default)
+
+The `terraform-vault-hcptf-onboarding` module (L0) authenticates to the `admin` namespace and creates a tenant namespace inside each environment namespace (`admin/<env>/<tenant>`). It does not create the environment namespaces, so an L0 run for an environment whose namespace is missing fails.
 
 ### Admin project variable set
 
@@ -119,7 +121,7 @@ Refer to the [hcptf-onboarding module reference](../modules/hcptf-onboarding.md#
 The reference implementation bootstraps this structure with a private Terraform configuration that is not distributed with the portal, so build your own bootstrap that creates:
 
 1. The admin project (default name `HCP Vault Admin`) in your HCP Terraform organization, with the [project-scoped variable set](#admin-project-variable-set).
-2. The [JWT auth mount and admin role](#admin-namespace) in the Vault `admin` namespace, trusting HCP Terraform's OIDC issuer.
+2. The [JWT auth mount, admin role, and environment namespaces](#admin-namespace) in the Vault `admin` namespace, trusting HCP Terraform's OIDC issuer.
 
 Scope your bootstrap to those two targets only — your HCP Terraform organization and the Vault `admin` namespace — and review the plan output before you approve the apply. If your organization has access to the reference bootstrap, running its apply does the same thing.
 

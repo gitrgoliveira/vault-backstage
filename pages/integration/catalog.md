@@ -32,6 +32,7 @@ Adjust the `target` paths relative to your `packages/backend/` directory.
 | Kind | Name | Description |
 |------|------|-------------|
 | Domain | `vault-self-service` | The Vault self-service platform domain |
+| System | `vault-admin` | Admin layer module that onboards tenants into HCP Terraform and Vault |
 | System | `vault-trust` | Trust layer modules that establish auth backends |
 | System | `vault-workload` | Workload layer modules that onboard identities |
 | System | `vault-usecase` | Use-case layer modules that grant access and policies |
@@ -45,11 +46,11 @@ All entities are owned by `group:default/vault-platform`.
 | Annotation | Purpose |
 |------------|---------|
 | `hcptf.io/module-name` | Maps the component to the HCP Terraform no-code module |
-| `hcptf.io/layer` | Identifies the onboarding layer (`trust`, `workload`, or `usecase`) |
+| `hcptf.io/layer` | Identifies the onboarding layer (`admin`, `trust`, `workload`, or `usecase`) |
 | `hcptf.io/outputs` | Comma-separated list of Terraform output names surfaced as entity annotations |
 | `backstage.io/techdocs-ref` | Points to the TechDocs site for the module |
 
-The modules are assigned to systems: trust modules belong to `vault-trust`, workload modules to `vault-workload`, and use-case modules to `vault-usecase`.
+The modules are assigned to systems: the L0 module belongs to `vault-admin`, trust modules to `vault-trust`, workload modules to `vault-workload`, and use-case modules to `vault-usecase`.
 
 ## Organization
 
@@ -67,12 +68,12 @@ In addition to the static catalog entities above, the [HCP Terraform catalog pro
 | Resource type | Created when | Annotations |
 |---------------|-------------|-------------|
 | `vault-target` | A tenant is onboarded (L0) | `hcptf.io/tenant`, `hcptf.io/environment`, `hcptf.io/project-id` |
-| `vault-workspace` | Any template runs | `hcptf.io/workspace-id`, `hcptf.io/module-name`, `hcptf.io/layer`, `hcptf.io/run-status`, `hcptf.io/tenant`, `hcptf.io/environment`, plus `hcptf.io/output.<key>` for each non-sensitive output |
+| `vault-workspace` | A workspace of one of the nine modules exists in a `Product=Vault` project, or is an L0 workspace in the admin project (when no project carries the tag, in any project) | `hcptf.io/workspace-id`, `hcptf.io/workspace-url`, `hcptf.io/module-name`, `hcptf.io/layer`, `hcptf.io/run-status`, plus `hcptf.io/output.<key>` for each non-sensitive output. Workspaces in an onboarded tenant project also get `hcptf.io/tenant`, `hcptf.io/environment`, and `hcptf.io/target` (`<tenant>-<env>`), which the pickers scope on. |
 
 These resources appear in Entity Picker fields in the L1 through L3 templates. The provider refreshes every 5 minutes.
 
 !!! note
-    The provider labels `terraform-vault-hcptf-onboarding` workspaces with the `trust` layer even though the module serves the L0 admin function. This label is cosmetic: the `vault-target` resources that the template pickers rely on are emitted from the module's outputs, not from this label, so no action is needed.
+    L0 `terraform-vault-hcptf-onboarding` workspaces carry the `admin` layer and belong to the `vault-admin` system. The provider re-reads the `Product=Vault` project list at most once a minute, so a newly onboarded tenant is picked up by the next refresh without a backend restart. The scaffolder likewise re-reads the no-code module list, so a newly published module can be provisioned without a restart; to appear in the catalog it also needs a `MODULE_LAYER` entry in the backend plugin.
 
 ## Allowed entity kinds
 

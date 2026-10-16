@@ -10,6 +10,7 @@ import { canonicalModuleName, layerForModule } from './moduleLayer';
 /** Derives a Backstage system name from a workspace layer. */
 function layerToSystem(layer: string): string {
   const map: Record<string, string> = {
+    admin: 'vault-admin',
     trust: 'vault-trust',
     workload: 'vault-workload',
     usecase: 'vault-usecase',
@@ -99,6 +100,11 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
     // Gate ingestion to workspaces that live in a Product:Vault-tagged project.
     // If the org uses no such tag (empty set), fall back to module-only
     // filtering so the catalog is not accidentally emptied.
+    // The admin project holds the L0 tenant-onboarding workspaces. The
+    // bootstrap leaves it untagged, so its admin-layer workspaces are
+    // admitted explicitly below, and it is where tenants are discovered.
+    const adminProjectId = await this.client.findAdminProjectId();
+
     let vaultProjectIds: Set<string> | undefined;
     try {
       const projects = await this.client.listVaultProjects();
@@ -119,7 +125,9 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
     // Resolve onboarded tenant/env targets once and index them by project id so
     // each workspace can be enriched with its tenant/environment and linked to
     // the matching vault-target (used by the "create next layer" button).
-    const targets = await this.discoverTargets();
+    const targets = adminProjectId
+      ? await this.discoverTargets(adminProjectId)
+      : [];
     const targetByProject = new Map(targets.map(t => [t.projectId, t]));
 
     const entities = await Promise.all(
@@ -131,13 +139,15 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
         // matching layer, so they are skipped to keep the catalog Vault-only.
         if (!moduleName || !layer) return null;
         // Also require the workspace to live in a Product:Vault-tagged project
-        // (when such projects exist), so stray Vault-module workspaces sitting
-        // in unrelated projects are excluded.
-        if (
-          vaultProjectIds &&
-          !(ws.projectId && vaultProjectIds.has(ws.projectId))
-        ) {
-          return null;
+        // (when such projects exist), or to be an L0 workspace in the admin
+        // project, so stray Vault-module workspaces sitting in unrelated
+        // projects are excluded.
+        if (vaultProjectIds) {
+          const admitted =
+            !!ws.projectId &&
+            (vaultProjectIds.has(ws.projectId) ||
+              (layer === 'admin' && ws.projectId === adminProjectId));
+          if (!admitted) return null;
         }
         const system = layerToSystem(layer);
         const target = ws.projectId
@@ -165,9 +175,12 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
           );
           for (const o of outputs) {
             if (!o.sensitive) {
-              outputAnnotations[`hcptf.io/output.${o.key}`] = String(
-                o.value ?? '',
-              );
+              // Map and list outputs (the L0 module's are maps) would
+              // otherwise render as "[object Object]".
+              outputAnnotations[`hcptf.io/output.${o.key}`] =
+                typeof o.value === 'object' && o.value !== null
+                  ? JSON.stringify(o.value)
+                  : String(o.value ?? '');
             }
           }
         } catch {
@@ -224,7 +237,12 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
             spec: {
               type: 'vault-workspace',
               lifecycle: 'production',
-              owner: `group:default/${tenant.toLowerCase()}`,
+              // L0 workspaces sit in the admin project, outside any tenant,
+              // and are run by the platform team.
+              owner:
+                layer === 'admin'
+                  ? 'group:default/vault-platform'
+                  : `group:default/${tenant.toLowerCase()}`,
               system: `system:default/${system}`,
               // Link to the previous-layer workspace and the tenant/env target
               // so the catalog graph shows the L1 -> L2 -> L3 chain and each
@@ -258,12 +276,12 @@ export class HcpTerraformWorkspaceProvider implements EntityProvider {
   /**
    * Discover onboarded tenant/env targets, logging and tolerating failure.
    */
-  private async discoverTargets(): Promise<
-    Awaited<ReturnType<HcpTfClient['discoverOnboardedTargets']>>
-  > {
+  private async discoverTargets(
+    adminProjectId: string,
+  ): Promise<Awaited<ReturnType<HcpTfClient['discoverOnboardedTargets']>>> {
     let targets: Awaited<ReturnType<HcpTfClient['discoverOnboardedTargets']>>;
     try {
-      targets = await this.client.discoverOnboardedTargets();
+      targets = await this.client.discoverOnboardedTargets(adminProjectId);
     } catch (err: any) {
       this.logger.warn(
         `HcpTerraformWorkspaceProvider: failed to discover onboarded targets: ${err.message}`,

@@ -72,6 +72,15 @@ export interface WorkspaceSummary {
   currentStateVersionId: string | null;
 }
 
+/**
+ * How long the org-wide Vault project and no-code module lists are reused.
+ * Both grow while the backend runs (every L0 apply adds tenant projects, and
+ * modules get published or no-code enabled), so they must not live for the
+ * whole process. Shorter than the 5-minute catalog refresh, so each refresh
+ * sees the current lists.
+ */
+export const LIST_CACHE_TTL_MS = 60_000;
+
 /** Client for the HCP Terraform no-code provisioning APIs. */
 export class HcpTfClient {
   private readonly baseUrl: string;
@@ -87,14 +96,16 @@ export class HcpTfClient {
   /** Tag-binding marking a project as a Vault onboarding project. */
   private readonly productTagKey: string;
   private readonly productTagValue: string;
-  /** Cache of Vault-tagged projects [{id, name}]. */
-  private vaultProjectsCache?: { id: string; name: string }[];
-  /** Cache of the Vault no-code module list (registry sweep is expensive). */
+  /** Cache of Vault-tagged projects [{id, name}], refreshed after LIST_CACHE_TTL_MS. */
+  private vaultProjectsCache?: {
+    fetchedAt: number;
+    projects: { id: string; name: string }[];
+  };
+  /** Cache of the Vault no-code module list (registry sweep is expensive), refreshed after LIST_CACHE_TTL_MS. */
   private vaultNoCodeModulesCache?: {
-    name: string;
-    nocodeId: string;
-    versionTags?: string[];
-  }[];
+    fetchedAt: number;
+    modules: { name: string; nocodeId: string; versionTags?: string[] }[];
+  };
   /** Cache of workspaceId -> {stateVersionId, outputs}; avoids refetching unchanged outputs. */
   private outputsCache: Map<
     string,
@@ -145,21 +156,44 @@ export class HcpTfClient {
 
   /**
    * List HCP TF projects tagged as Vault onboarding projects
-   * (productTag.key=productTag.value, default Product=Vault). Cached per process.
+   * (productTag.key=productTag.value, default Product=Vault). Cached for
+   * LIST_CACHE_TTL_MS.
    */
   async listVaultProjects(): Promise<{ id: string; name: string }[]> {
-    if (this.vaultProjectsCache) return this.vaultProjectsCache;
-    const { data } = await this.requestAllPages(
-      `/api/v2/organizations/${this.organization}/projects` +
-        `?filter%5Btagged%5D%5B0%5D%5Bkey%5D=${encodeURIComponent(this.productTagKey)}` +
-        `&filter%5Btagged%5D%5B0%5D%5Bvalue%5D=${encodeURIComponent(this.productTagValue)}`,
-    );
+    const cached = this.vaultProjectsCache;
+    if (cached && this.isFresh(cached)) return cached.projects;
+    let data: any[];
+    try {
+      ({ data } = await this.requestAllPages(
+        `/api/v2/organizations/${this.organization}/projects` +
+          `?filter%5Btagged%5D%5B0%5D%5Bkey%5D=${encodeURIComponent(this.productTagKey)}` +
+          `&filter%5Btagged%5D%5B0%5D%5Bvalue%5D=${encodeURIComponent(this.productTagValue)}`,
+      ));
+    } catch (err) {
+      return this.staleOrThrow(cached?.projects, 'Vault-tagged projects', err);
+    }
     const projects = data.map((p: any) => ({
       id: p.id as string,
       name: p.attributes?.name as string,
     }));
-    this.vaultProjectsCache = projects;
+    this.vaultProjectsCache = { fetchedAt: Date.now(), projects };
     return projects;
+  }
+
+  private isFresh(cache: { fetchedAt: number }): boolean {
+    return Date.now() - cache.fetchedAt < LIST_CACHE_TTL_MS;
+  }
+
+  /**
+   * A failed refetch keeps serving the last good list: an empty or missing
+   * project list would lift the catalog's project gate for that refresh.
+   */
+  private staleOrThrow<T>(stale: T | undefined, what: string, err: unknown): T {
+    if (stale === undefined) throw err;
+    this.logger.warn(
+      `Could not refresh ${what}; using the previous list: ${(err as Error).message}`,
+    );
+    return stale;
   }
 
   /**
@@ -172,6 +206,21 @@ export class HcpTfClient {
     const id = await this.resolveProjectByName(this.adminProjectName);
     this.adminProjectIdCache = id;
     return id;
+  }
+
+  /**
+   * The admin project id, or undefined (with a warning) when it cannot be
+   * resolved, e.g. because `projects.adminProjectName` names no project.
+   */
+  async findAdminProjectId(): Promise<string | undefined> {
+    try {
+      return await this.resolveAdminProjectId();
+    } catch (err: any) {
+      this.logger.warn(
+        `Cannot resolve admin project "${this.adminProjectName}": ${err.message}`,
+      );
+      return undefined;
+    }
   }
 
   private asStringMap(value: unknown): Record<string, string> | undefined {
@@ -206,19 +255,11 @@ export class HcpTfClient {
    * `project_names` maps keyed by environment, which are the authoritative
    * record of the per-environment tenant projects that were created.
    */
-  async discoverOnboardedTargets(): Promise<
+  async discoverOnboardedTargets(
+    adminProjectId: string,
+  ): Promise<
     { tenant: string; env: string; projectId: string; name: string }[]
   > {
-    let adminProjectId: string;
-    try {
-      adminProjectId = await this.resolveAdminProjectId();
-    } catch (err: any) {
-      this.logger.warn(
-        `Cannot resolve admin project "${this.adminProjectName}" for tenant discovery: ${err.message}`,
-      );
-      return [];
-    }
-
     const workspaces = await this.listWorkspaces(adminProjectId);
     const onboarding = workspaces.filter(w =>
       (w.sourceModuleId ?? '').includes('hcptf-onboarding'),
@@ -430,9 +471,15 @@ export class HcpTfClient {
   async listVaultNoCodeModules(): Promise<
     { name: string; nocodeId: string; versionTags?: string[] }[]
   > {
-    if (this.vaultNoCodeModulesCache) return this.vaultNoCodeModulesCache;
-    const mods = await this.listVaultRegistryModules();
-    this.vaultNoCodeModulesCache = mods
+    const cached = this.vaultNoCodeModulesCache;
+    if (cached && this.isFresh(cached)) return cached.modules;
+    let mods: any[];
+    try {
+      mods = await this.listVaultRegistryModules();
+    } catch (err) {
+      return this.staleOrThrow(cached?.modules, 'Vault no-code modules', err);
+    }
+    const modules = mods
       .filter(
         m =>
           m.attributes?.['no-code'] === true &&
@@ -443,7 +490,8 @@ export class HcpTfClient {
         nocodeId: m.relationships['no-code-modules'].data[0].id,
         versionTags: m.attributes?.['version-tags'],
       }));
-    return this.vaultNoCodeModulesCache;
+    this.vaultNoCodeModulesCache = { fetchedAt: Date.now(), modules };
+    return modules;
   }
 
   /**

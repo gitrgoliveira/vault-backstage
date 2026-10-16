@@ -40,10 +40,15 @@ module "cluster_onboarding" {
   version = "~> 0.2.0"
 
   cluster_name       = "ocp-prod-eu"
-  jwt_issuer         = "https://kubernetes.default.svc"
-  oidc_discovery_url = "https://kubernetes.default.svc"
+  jwt_issuer         = "https://oidc.ocp-prod-eu.example.com"
+  oidc_discovery_url = "https://oidc.ocp-prod-eu.example.com"
 }
 ```
+
+Vault fetches `<oidc_discovery_url>/.well-known/openid-configuration` and the JWKS it names, so the discovery URL must be reachable from HCP Vault without authentication and served with a publicly trusted certificate. Vault also checks that the `issuer` in the discovery document equals `oidc_discovery_url`, so `jwt_issuer` and `oidc_discovery_url` must both be the issuer the cluster actually puts in its tokens. The in-cluster default issuer `https://kubernetes.default.svc` is not reachable from outside the cluster, and a proxy in front of it still serves that issuer, so either:
+
+- set the cluster's service account issuer (`kube-apiserver --service-account-issuer`; on OpenShift, `spec.serviceAccountIssuer` in `authentication.config/cluster`) to a public URL that serves discovery without authentication (bind `system:service-account-issuer-discovery` to `system:unauthenticated`), and use that URL for both inputs; or
+- keep `jwt_issuer` equal to the tokens' `iss` claim and set `jwks_url` to a reachable JWKS endpoint, or pass the cluster's signing key as `jwt_validation_pubkey` (re-provision after the cluster rotates that key).
 
 Next step in chain: `terraform-vault-add-k8s-namespace-access`.
 

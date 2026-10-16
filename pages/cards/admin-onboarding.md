@@ -27,7 +27,7 @@ This card runs the [`terraform-vault-hcptf-onboarding`](../modules/hcptf-onboard
 |-------|----------|------|-------------|
 | **Workspace Name** | Yes | `string` | Unique name for the HCP Terraform workspace. Must match `^[A-Za-z0-9_-]+$`. |
 | **Tenant** | Yes | `string` | Tenant identifier (2–32 chars, alphanumeric and hyphens). Used in project and namespace naming. |
-| **Admin Project Name** | No | `string` | The HCP Terraform admin project carrying the Vault credentials variable set. Defaults to `HCP Vault Admin`. |
+| **Admin Project Name** | Yes | `string` | The HCP Terraform admin project carrying the Vault credentials variable set. Prefilled with `HCP Vault Admin`. Must match `hcpTerraform.projects.adminProjectName` in the portal's config, or the onboarded tenant never appears in the L1–L3 pickers. |
 | **Environments** | No | `array` | Which environments to create. Checkboxes for `dev`, `test`, `prod`. Defaults to all three. |
 
 ## Output

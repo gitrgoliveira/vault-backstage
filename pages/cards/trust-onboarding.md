@@ -35,8 +35,7 @@ The following fields appear when you set Trust Type to **Kubernetes / OpenShift 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
 | **Cluster Name** | Yes | `string` | Short unique cluster identifier, such as `ocp-prod-eu`. Downstream templates reference this name exactly. |
-| **JWT Issuer URL** | Yes | `string` | The cluster's OIDC issuer URL (`kube-apiserver --service-account-issuer`). |
-| **OIDC Discovery URL** | No | `string` | Override the OIDC discovery endpoint if it differs from the issuer. |
+| **JWT Issuer URL** | Yes | `string` | The cluster's service-account issuer (`kube-apiserver --service-account-issuer`), exactly as it appears in its tokens. Vault reads OIDC discovery from it, so it must start with `https://` and be reachable from Vault without authentication. A cluster on the in-cluster default `https://kubernetes.default.svc` cannot be onboarded from this card; refer to [cluster onboarding](../modules/cluster-onboarding.md#registry-usage) for the alternatives. |
 
 ### GitLab-specific fields
 

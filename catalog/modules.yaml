@@ -148,10 +148,10 @@ metadata:
   annotations:
     backstage.io/techdocs-ref: dir:../docs/terraform-vault-hcptf-onboarding
     hcptf.io/module-name: terraform-vault-hcptf-onboarding
-    hcptf.io/layer: trust
+    hcptf.io/layer: admin
     hcptf.io/outputs: vault_namespaces,variable_set_ids
 spec:
   type: terraform-module
   lifecycle: production
   owner: group:default/vault-platform
-  system: vault-trust
+  system: vault-admin

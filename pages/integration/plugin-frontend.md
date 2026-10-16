@@ -44,7 +44,7 @@ The **catalog module** (`vaultCatalogModule`) registers three extensions. The tw
 |-----------|-------------|
 | Terraform outputs card | Displays all `hcptf.io/output.*` annotations as a key-value table with copy buttons |
 | Next layer card | Shows a button linking to the next onboarding template (L1 trust links to L2 workload, L2 workload links to L3 use-case) and pre-populates the scaffolder form with the current entity's context |
-| Layer filter | Adds a "Layer" facet to the catalog list page, filtering entities by `hcptf.io/layer` annotation |
+| Layer filter | Adds a "Layer" facet to the catalog list page, filtering entities by the `hcptf.io/layer` annotation (`admin`, `trust`, `workload`, `usecase`) |
 
 The **scaffolder module** (`vaultScaffolderModule`) registers one custom field:
 
