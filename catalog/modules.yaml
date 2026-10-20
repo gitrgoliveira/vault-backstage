@@ -5,7 +5,7 @@ metadata:
   description: Creates a Vault JWT auth backend for Kubernetes/OpenShift cluster trust.
   tags: [terraform, vault, onboarding, trust]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-cluster-onboarding
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-cluster-onboarding
     hcptf.io/module-name: terraform-vault-cluster-onboarding
     hcptf.io/layer: trust
     hcptf.io/outputs: jwt_auth_path,jwt_mount_accessor
@@ -22,7 +22,7 @@ metadata:
   description: Creates a Vault JWT auth backend for GitLab instance trust.
   tags: [terraform, vault, onboarding, trust, gitlab]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-gitlab-onboarding
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-gitlab-onboarding
     hcptf.io/module-name: terraform-vault-gitlab-onboarding
     hcptf.io/layer: trust
     hcptf.io/outputs: jwt_auth_path,jwt_mount_accessor
@@ -39,7 +39,7 @@ metadata:
   description: Onboards a Kubernetes namespace/service account as a Vault workload identity.
   tags: [terraform, vault, workload, kubernetes]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-k8s-namespace-access
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-add-k8s-namespace-access
     hcptf.io/module-name: terraform-vault-add-k8s-namespace-access
     hcptf.io/layer: workload
     hcptf.io/outputs: entity_id,auth_role_name,workload_name
@@ -57,7 +57,7 @@ metadata:
   description: Onboards a GitLab project as a Vault workload identity.
   tags: [terraform, vault, workload, gitlab]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-gitlab-project-access
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-add-gitlab-project-access
     hcptf.io/module-name: terraform-vault-add-gitlab-project-access
     hcptf.io/layer: workload
     hcptf.io/outputs: entity_id,auth_role_name,workload_name
@@ -75,7 +75,7 @@ metadata:
   description: Provisions KVv2 access and identity group bindings for a workload.
   tags: [terraform, vault, kv, usecase]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-kvv2
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-add-kvv2
     hcptf.io/module-name: terraform-vault-add-kvv2
     hcptf.io/layer: usecase
     hcptf.io/outputs: kv_mount_path,group_name,consumption_examples
@@ -93,7 +93,7 @@ metadata:
   description: Provisions PostgreSQL static role access through Vault DB engine.
   tags: [terraform, vault, postgresql, usecase]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-pgsql-role
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-add-pgsql-role
     hcptf.io/module-name: terraform-vault-add-pgsql-role
     hcptf.io/layer: usecase
     hcptf.io/outputs: db_role_name,policy_name,injector_yaml,vso_yaml
@@ -111,7 +111,7 @@ metadata:
   description: Grants custom ACL capabilities over Vault paths to workloads.
   tags: [terraform, vault, acl, usecase]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-add-permission-group
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-add-permission-group
     hcptf.io/module-name: terraform-vault-add-permission-group
     hcptf.io/layer: usecase
     hcptf.io/outputs: policy_name,group_name
@@ -129,7 +129,7 @@ metadata:
   description: Onboards PostgreSQL secrets engine and connection for downstream roles.
   tags: [terraform, vault, postgresql, onboarding]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-pgsql-onboarding
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-pgsql-onboarding
     hcptf.io/module-name: terraform-vault-pgsql-onboarding
     hcptf.io/layer: usecase
     hcptf.io/outputs: db_mount_path,db_connection_name
@@ -146,7 +146,7 @@ metadata:
   description: Bootstraps tenant onboarding into HCP Terraform and Vault namespaces.
   tags: [terraform, vault, hcp-terraform, onboarding]
   annotations:
-    backstage.io/techdocs-ref: dir:../docs/terraform-vault-hcptf-onboarding
+    backstage.io/techdocs-ref: dir:./docs/terraform-vault-hcptf-onboarding
     hcptf.io/module-name: terraform-vault-hcptf-onboarding
     hcptf.io/layer: admin
     hcptf.io/outputs: vault_namespaces,variable_set_ids

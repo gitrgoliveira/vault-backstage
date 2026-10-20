@@ -51,5 +51,5 @@ make generate
 
 This produces:
 
-- TechDocs sites under `docs/<module>/` for the Backstage Docs tab
+- TechDocs sites under `catalog/docs/<module>/` for the Backstage Docs tab
 - Variable inventories under `generated/variables/<module>.json` for the scaffolder

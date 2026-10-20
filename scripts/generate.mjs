@@ -4,7 +4,7 @@
  *
  * For each Terraform module it:
  *   1. Runs `terraform-docs` to extract inputs/outputs (machine-readable).
- *   2. Writes an inline TechDocs site under docs/<module>/ (mkdocs.yml +
+ *   2. Writes an inline TechDocs site under catalog/docs/<module>/ (mkdocs.yml +
  *      docs/index.md) sourced from the module README + a generated
  *      inputs/outputs reference, so the Docs tab renders without drift.
  *   3. Writes a variable inventory to generated/variables/<module>.json.
@@ -88,7 +88,7 @@ for (const [name, rel] of Object.entries(MODULES)) {
     ? readFileSync(readmePath, 'utf8')
     : `# ${name}\n`;
 
-  const docsDir = join(idpRoot, 'docs', name, 'docs');
+  const docsDir = join(idpRoot, 'catalog', 'docs', name, 'docs');
   mkdirSync(docsDir, { recursive: true });
 
   // Strip the hand-written Inputs/Outputs sections — the generated reference
@@ -119,9 +119,9 @@ for (const [name, rel] of Object.entries(MODULES)) {
   const mkdocs =
     `site_name: ${name}\n` +
     `site_description: Vault self-service Terraform module\n` +
-    `plugins:\n  - techdocs-core\n` +
-    `nav:\n  - Overview: index.md\n`;
-  writeFileSync(join(idpRoot, 'docs', name, 'mkdocs.yml'), mkdocs);
+    `nav:\n  - Overview: index.md\n` +
+    `plugins:\n  - techdocs-core\n`;
+  writeFileSync(join(idpRoot, 'catalog', 'docs', name, 'mkdocs.yml'), mkdocs);
 
   count += 1;
   console.log(`generated docs + inventory for ${name}`);

@@ -14,13 +14,15 @@
  *   node scripts/capture-screenshots.mjs --base-url http://localhost:3000
  */
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outDir = join(__dirname, '..', 'pages', 'img');
+const screenshotsDir = join(__dirname, '..', 'screenshots');
 mkdirSync(outDir, { recursive: true });
+mkdirSync(screenshotsDir, { recursive: true });
 
 const baseUrl = process.argv.includes('--base-url')
   ? process.argv[process.argv.indexOf('--base-url') + 1]
@@ -191,6 +193,26 @@ async function capture(browser) {
   await page.waitForURL('**/catalog', { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(3000);
   console.log(`Signed in. Current URL: ${page.url()}`);
+
+  // Capture create page (all template cards)
+  console.log('\n📸 Create page (template catalog)');
+  await page.goto(`${baseUrl}/create`, {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
+  await page
+    .locator('text=Vault Tenant Onboarding')
+    .first()
+    .waitFor({ state: 'visible', timeout: 15000 });
+  await page.waitForTimeout(2000);
+
+  const createPageOutPath = join(outDir, 'create-page.png');
+  await page.screenshot({
+    path: createPageOutPath,
+    fullPage: true,
+  });
+  copyFileSync(createPageOutPath, join(screenshotsDir, 'create-page.png'));
+  console.log('  ✓ saved create-page.png (pages/img/ and screenshots/)');
 
   for (const template of TEMPLATES) {
     console.log(`\n📸 ${template.label}`);
