@@ -1,6 +1,6 @@
 {
   "name": "@gitrgoliveira/plugin-hcp-terraform-backend",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "backstage": {
     "role": "backend-plugin-module"
   },
